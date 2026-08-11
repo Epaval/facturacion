@@ -132,3 +132,38 @@ tbody td { font-size: 1rem; padding: 11px 14px; }
   .ticket-total { font-size: 1.9rem; }
   .pos-grid { grid-template-columns: 1fr 460px; }
 }
+
+/* ===== POS GRANDE: cliente y cajero ven la compra ===== */
+body { font-size: 22px; }
+.contenido { max-width: 2040px; padding: 30px; }
+.topbar-int { padding: 16px 28px; }
+.marca { font-size: 1.5rem; }
+.nav-links a { font-size: 1.1rem; padding: 10px 16px; }
+.usuario { font-size: 1.05rem; }
+h1 { font-size: 2rem; }
+h2 { font-size: 1.4rem; }
+.subtitulo { font-size: 1.05rem; }
+.btn { padding: 13px 26px; font-size: 1.1rem; }
+.btn-chico { padding: 6px 14px; font-size: .95rem; }
+input, select, textarea { font-size: 1.1rem; padding: 12px 14px; }
+label { font-size: 1rem; }
+thead th { font-size: .9rem; padding: 14px 16px; }
+tbody td { font-size: 1.1rem; padding: 13px 16px; }
+.panel { padding: 24px; }
+.ticket-linea { font-size: 1.15rem; padding: 10px 0; }
+.ticket-total { font-size: 2.2rem; }
+.pos-grid { grid-template-columns: 1fr 520px; gap: 24px; }
+.barra-teclas { font-size: 1.05rem; padding: 12px 28px; gap: 26px; }
+.barra-teclas kbd { padding: 3px 10px; font-size: 1rem; }
+.badge { font-size: .85rem; }
+
+/* ===== Modal de cantidad (productos por peso) ===== */
+.modal-fondo { position: fixed; inset: 0; background: rgba(15,23,42,.55);
+  display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal-caja { background: #fff; border-radius: 12px; padding: 28px; width: 440px;
+  box-shadow: 0 20px 60px rgba(0,0,0,.35); }
+.modal-caja input[type="number"] { font-size: 1.5rem; padding: 14px; text-align: center; }
+
+/* ===== Fila clickeable en búsqueda del POS ===== */
+.fila-click { cursor: pointer; }
+.fila-click:hover { background: #e8f1fc; }

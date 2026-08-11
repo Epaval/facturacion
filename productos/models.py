@@ -33,6 +33,10 @@ class Producto(models.Model):
         ordering = ["nombre"]
 
     @property
+    def es_pesable(self):
+        return self.unidad in ("kg", "g", "lb")
+
+    @property
     def stock_bajo(self):
         return self.stock <= self.stock_minimo
 

@@ -15,13 +15,13 @@
       <thead><tr><th>Código</th><th>Producto</th><th>Precio</th><th>Stock</th><th>Agregar</th></tr></thead>
       <tbody>
       {% for p in productos %}
-        <tr>
+        <tr class="fila-click" onclick="window.location.href='?agregar={{ p.pk }}'">
           <td>{{ p.codigo_barras|default:"—" }}</td>
           <td>{{ p.nombre }}</td>
           <td>Bs {{ p.precio_venta }}</td>
           <td>{% if p.stock_bajo %}<span class="badge badge-rojo">{{ p.stock }}</span>{% else %}{{ p.stock }}{% endif %}</td>
           <td>
-            <form method="post" class="fila-agregar">
+            <form method="post" class="fila-agregar" onclick="event.stopPropagation()">
               {% csrf_token %}
               <input type="hidden" name="accion" value="agregar">
               <input type="hidden" name="producto" value="{{ p.pk }}">
@@ -70,4 +70,27 @@
     </form>
   </div>
 </div>
+
+{% if modal_producto %}
+<div class="modal-fondo">
+  <div class="modal-caja">
+    <h2>{{ modal_producto.nombre }}</h2>
+    <p class="subtitulo">
+      Precio: Bs {{ modal_producto.precio_venta }} por {{ modal_producto.unidad }} ·
+      Stock: {{ modal_producto.stock }} {{ modal_producto.unidad }}
+    </p>
+    <form method="post" data-guardar>
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="agregar">
+      <input type="hidden" name="producto" value="{{ modal_producto.pk }}">
+      <label>Cantidad ({{ modal_producto.unidad }})</label>
+      <input type="number" name="cantidad" step="0.001" min="0.001" placeholder="0.000" autofocus required>
+      <div style="display:flex;gap:8px;margin-top:14px">
+        <button class="btn btn-verde" type="submit" style="flex:1">Agregar al ticket (F8)</button>
+        <a class="btn btn-borde" href="{% url 'ventas:pos' %}">Cancelar (Esc)</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
 {% endblock %}

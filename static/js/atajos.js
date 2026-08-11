@@ -26,7 +26,10 @@ document.addEventListener("keydown", function (e) {
     }
     case "Escape": {
       const tag = (document.activeElement || {}).tagName;
-      if (tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") history.back();
+      if (tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+        if (document.querySelector(".modal-fondo")) window.location.href = RUTAS.pos;
+        else history.back();
+      }
       break;
     }
   }

@@ -42,6 +42,26 @@ class POSView(LoginRequiredMixin, View):
         q = request.GET.get("q", "").strip()
         productos = None
 
+        # Clic en fila de resultados: agrega 1 o abre modal si es pesable
+        agregar_id = request.GET.get("agregar")
+        if agregar_id:
+            producto = Producto.objects.filter(activo=True, pk=agregar_id).first()
+            if producto:
+                if producto.es_pesable:
+                    total = sum(Decimal(l["subtotal"]) for l in lineas)
+                    return render(request, "ventas/pos.html", {
+                        "lineas": lineas, "productos": None, "q": "",
+                        "total": total, "modal_producto": producto,
+                        "title": "Nueva venta (POS)",
+                    })
+                error = self._agregar(lineas, producto, Decimal("1"))
+                if error:
+                    messages.error(request, error)
+                else:
+                    request.session["pos_lineas"] = lineas
+                    messages.success(request, f"{producto.nombre} agregado al ticket")
+            return redirect("ventas:pos")
+
         if q:
             exacto = Producto.objects.filter(activo=True).filter(
                 Q(codigo_barras__iexact=q) | Q(nombre__iexact=q)
@@ -50,6 +70,16 @@ class POSView(LoginRequiredMixin, View):
                 unicos = Producto.objects.filter(activo=True, codigo_barras__icontains=q)
                 if unicos.count() == 1:
                     exacto = unicos.first()
+            if exacto and exacto.es_pesable:
+                total = sum(Decimal(l["subtotal"]) for l in lineas)
+                return render(request, "ventas/pos.html", {
+                    "lineas": lineas,
+                    "productos": None,
+                    "q": "",
+                    "total": total,
+                    "modal_producto": exacto,
+                    "title": "Nueva venta (POS)",
+                })
             if exacto:
                 error = self._agregar(lineas, exacto, Decimal("1"))
                 if error:
