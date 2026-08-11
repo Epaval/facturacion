@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel">
+  <div class="panel-cabecera">
+    <h1>Productos</h1>
+    <a class="btn btn-azul" href="{% url 'productos:create' %}">+ Registrar producto (F5)</a>
+  </div>
+  <form method="get" class="form-fila" style="margin-bottom:12px">
+    <input type="text" name="q" value="{{ q }}" placeholder="Nombre o código de barras (F2)" autofocus>
+    <select name="categoria">
+      <option value="">Todas las categorías</option>
+      {% for c in categorias %}<option value="{{ c.pk }}" {% if categoria_sel == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.nombre }}</option>{% endfor %}
+    </select>
+    <button class="btn btn-borde" type="submit">Buscar</button>
+  </form>
+  <table>
+    <thead><tr><th>Producto</th><th>Código</th><th>Categoría</th><th>Precio</th><th>Stock</th><th></th></tr></thead>
+    <tbody>
+    {% for p in object_list %}
+      <tr>
+        <td>{{ p.nombre }}</td>
+        <td>{{ p.codigo_barras|default:"—" }}</td>
+        <td>{{ p.categoria.nombre }}</td>
+        <td>Bs {{ p.precio_venta }}</td>
+        <td>{% if p.stock_bajo %}<span class="badge badge-rojo">{{ p.stock }} {{ p.unidad }}</span>{% else %}{{ p.stock }} {{ p.unidad }}{% endif %}</td>
+        <td><a class="btn btn-borde btn-chico" href="{% url 'productos:update' p.pk %}">Editar</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">No hay productos.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if is_paginated %}
+  <p style="margin-top:10px">
+    {% if page_obj.has_previous %}<a href="?q={{ q }}&page={{ page_obj.previous_page_number }}">← Anterior</a>{% endif %}
+    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}<a href="?q={{ q }}&page={{ page_obj.next_page_number }}">Siguiente →</a>{% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}

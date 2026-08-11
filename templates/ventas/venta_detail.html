@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:700px">
+  <div class="panel-cabecera">
+    <h1>Venta #{{ venta.numero }}</h1>
+    <span class="badge {% if venta.estado == 'completada' %}badge-verde{% else %}badge-rojo{% endif %}">{{ venta.get_estado_display }}</span>
+  </div>
+  <p class="subtitulo">{{ venta.fecha|date:"d/m/Y H:i" }} · Atendió: {{ venta.usuario.full_name }}</p>
+  <p><strong>Cliente:</strong> {{ venta.cliente|default:"Consumidor final" }} · <strong>Pago:</strong> {{ venta.get_metodo_pago_display }}</p>
+  <table>
+    <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+    <tbody>
+    {% for d in venta.detalles.all %}
+      <tr><td>{{ d.producto.nombre }}</td><td>{{ d.cantidad }}</td><td>Bs {{ d.precio_unitario }}</td><td>Bs {{ d.subtotal }}</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p style="text-align:right">Subtotal: Bs {{ venta.subtotal }}</p>
+  <div class="ticket-total">TOTAL: Bs {{ venta.total }}</div>
+  {% if venta.pagos.all %}
+  <h2 style="margin-top:14px">Pagos</h2>
+  <table>
+    <thead><tr><th>Método</th><th>Monto</th></tr></thead>
+    <tbody>
+      {% for p in venta.pagos.all %}
+      <tr><td>{{ p.get_metodo_display }}</td><td>Bs {{ p.monto }}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% endif %}
+  {% if venta.cambio %}
+  <p style="text-align:right"><strong>Vuelto: Bs {{ venta.cambio }}</strong></p>
+  {% endif %}
+  <a class="btn btn-borde" href="{% url 'ventas:list' %}">Volver (Esc)</a>
+</div>
+{% endblock %}

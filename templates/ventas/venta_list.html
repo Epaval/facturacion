@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel">
+  <div class="panel-cabecera">
+    <h1>Historial de ventas</h1>
+    <a class="btn btn-azul" href="{% url 'ventas:pos' %}">+ Nueva venta (F1)</a>
+  </div>
+  <form method="get" style="margin-bottom:12px">
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por número o cliente">
+  </form>
+  <table>
+    <thead><tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Método</th><th>Total</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for v in object_list %}
+      <tr>
+        <td><a href="{% url 'ventas:detail' v.pk %}">#{{ v.numero }}</a></td>
+        <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+        <td>{{ v.cliente|default:"Consumidor final" }}</td>
+        <td>{{ v.get_metodo_pago_display }}</td>
+        <td><strong>Bs {{ v.total }}</strong></td>
+        <td>{% if v.estado == 'completada' %}<span class="badge badge-verde">Completada</span>{% else %}<span class="badge badge-rojo">Anulada</span>{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">No hay ventas.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

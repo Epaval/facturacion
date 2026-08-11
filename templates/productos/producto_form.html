@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:700px">
+  <h1>{{ title }}</h1>
+  <form method="post" data-guardar>
+    {% csrf_token %}
+    {{ form.as_p }}
+    <div style="display:flex;gap:10px;margin-top:14px">
+      <button type="submit" class="btn btn-verde">Guardar (F8)</button>
+      <a class="btn btn-borde" href="{% url 'productos:list' %}">Cancelar (Esc)</a>
+    </div>
+  </form>
+</div>
+{% endblock %}

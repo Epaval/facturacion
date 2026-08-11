@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>Cobro de venta</h1>
+<p class="subtitulo">Cliente obligatorio. La venta se confirma solo con pago igual o mayor al total; si es mayor se muestra el vuelto.</p>
+
+<div class="pos-grid">
+  <div class="panel">
+    <h2>Resumen del ticket</h2>
+    {% for l in lineas %}
+      <div class="ticket-linea"><span>{{ l.nombre }} × {{ l.cantidad }}</span><strong>Bs {{ l.subtotal }}</strong></div>
+    {% endfor %}
+
+    <p style="margin-top:14px"><label>Cliente (obligatorio)</label></p>
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="cliente">
+      <select name="cliente" onchange="this.form.submit()">
+        <option value="">— Selecciona cliente —</option>
+        {% for c in clientes %}
+        <option value="{{ c.pk }}" {% if cliente and cliente.pk == c.pk %}selected{% endif %}>{{ c.full_name }} · {{ c.ci_nit|default:"s/doc" }}</option>
+        {% endfor %}
+      </select>
+    </form>
+    {% if not cliente %}
+      <p class="subtitulo" style="margin-top:6px">Debes seleccionar un cliente. Registra uno nuevo con F4.</p>
+    {% endif %}
+
+    <h2 style="margin-top:16px">Pagos</h2>
+    {% for p in pagos %}
+      <div class="ticket-linea">
+        <span>{{ p.metodo_label }}</span>
+        <span class="ticket-derecha">
+          <strong>Bs {{ p.monto }}</strong>
+          <form method="post" class="form-inline">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="quitar_pago">
+            <input type="hidden" name="indice" value="{{ forloop.counter0 }}">
+            <button class="btn btn-rojo btn-chico" type="submit">×</button>
+          </form>
+        </span>
+      </div>
+    {% empty %}
+      <p class="subtitulo">Sin pagos registrados.</p>
+    {% endfor %}
+
+    <form method="post" class="fila-agregar" style="margin-top:10px">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="agregar_pago">
+      <select name="metodo" style="width:auto">
+        <option value="efectivo">Efectivo</option>
+        <option value="pago_movil">Pago Móvil</option>
+        <option value="tarjeta">Tarjeta</option>
+        <option value="bio_pago">Bio Pago</option>    
+      </select>
+      <input type="number" name="monto" step="0.01" min="0.01" placeholder="Monto Bs" required style="width:120px">
+      <button class="btn btn-azul" type="submit">Agregar pago</button>
+    </form>
+    <p class="subtitulo" style="margin-top:8px">Puedes combinar varios pagos (efectivo + transferencia) hasta completar el total.</p>
+  </div>
+
+  <div class="panel">
+    <h2>Total a pagar</h2>
+    <div class="ticket-total">Bs {{ total }}</div>
+    <div class="ticket-linea"><span>Pagado</span><strong>Bs {{ pagado }}</strong></div>
+    {% if cambio %}
+      <div class="ticket-linea"><span>Vuelto al cliente</span><strong style="color:var(--verde)">Bs {{ cambio }}</strong></div>
+    {% endif %}
+    {% if falta %}
+      <div class="ticket-linea"><span>Falta</span><strong style="color:var(--rojo)">Bs {{ falta }}</strong></div>
+    {% endif %}
+
+    <form method="post" data-confirmar style="margin-top:14px">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="confirmar">
+      <button class="btn btn-verde" style="width:100%" type="submit"
+              {% if not cliente or not completo %}disabled{% endif %}>
+        {% if not cliente %}Selecciona un cliente{% elif not completo %}Falta Bs {{ falta }} para confirmar{% else %}Confirmar venta (F9){% if cambio %} · Vuelto Bs {{ cambio }}{% endif %}{% endif %}
+      </button>
+    </form>
+    <form method="post" style="margin-top:8px">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="volver">
+      <button class="btn btn-borde" style="width:100%" type="submit">Volver al ticket (Esc)</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

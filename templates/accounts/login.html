@@ -1,0 +1,21 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Iniciar sesión · Facturación</title>
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}">
+</head>
+<body>
+<div class="login-contenedor">
+  <div class="login-caja">
+    <h1>■ Facturación</h1>
+    <form method="post">
+      {% csrf_token %}
+      {{ form.as_p }}
+      <button type="submit" class="btn btn-azul" style="width:100%">Entrar</button>
+    </form>
+  </div>
+</div>
+</body>
+</html>

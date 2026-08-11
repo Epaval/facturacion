@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+
+
+{% block content %}
+<h1>Nueva venta</h1>
+<p class="subtitulo">Escanea el código de barras (o escríbelo y presiona Enter) para agregar directo al ticket</p>
+
+<div class="pos-grid">
+  <div class="panel">
+    <form method="get">
+      <input type="text" name="q" value="{{ q }}" placeholder="Código de barras o nombre (F2 / escáner)" autofocus>
+    </form>
+    {% if productos is not None %}
+    <table style="margin-top:10px">
+      <thead><tr><th>Código</th><th>Producto</th><th>Precio</th><th>Stock</th><th>Agregar</th></tr></thead>
+      <tbody>
+      {% for p in productos %}
+        <tr>
+          <td>{{ p.codigo_barras|default:"—" }}</td>
+          <td>{{ p.nombre }}</td>
+          <td>Bs {{ p.precio_venta }}</td>
+          <td>{% if p.stock_bajo %}<span class="badge badge-rojo">{{ p.stock }}</span>{% else %}{{ p.stock }}{% endif %}</td>
+          <td>
+            <form method="post" class="fila-agregar">
+              {% csrf_token %}
+              <input type="hidden" name="accion" value="agregar">
+              <input type="hidden" name="producto" value="{{ p.pk }}">
+              <input type="number" name="cantidad" value="1" min="0.01" step="0.01">
+              <button class="btn btn-azul btn-chico" type="submit">Agregar</button>
+            </form>
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="5">Sin resultados para "{{ q }}".</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <h2>Ticket</h2>
+    {% for l in lineas %}
+      <div class="ticket-linea">
+        <span>{{ l.nombre }} × {{ l.cantidad }}</span>
+        <span class="ticket-derecha">
+          <strong>Bs {{ l.subtotal }}</strong>
+          <form method="post" class="form-inline">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="quitar">
+            <input type="hidden" name="indice" value="{{ forloop.counter0 }}">
+            <button class="btn btn-rojo btn-chico" type="submit">×</button>
+          </form>
+        </span>
+      </div>
+    {% empty %}
+      <p class="subtitulo">Ticket vacío. Escanea o busca productos para comenzar.</p>
+    {% endfor %}
+
+    <form method="post" data-finalizar style="margin-top:12px">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="pagar">
+      <div class="ticket-total">TOTAL: Bs {{ total }}</div>
+      <button class="btn btn-verde" style="width:100%" type="submit">Pasar a pagar (F10)</button>
+    </form>
+    <form method="post" style="margin-top:8px">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="vaciar">
+      <button class="btn btn-rojo" style="width:100%" type="submit">Vaciar ticket</button>
+    </form>
+  </div>
+</div>
+{% endblock %}

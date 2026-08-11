@@ -1,0 +1,134 @@
+/* ===== Variables y base ===== */
+:root {
+  --azul: #1e65c0; --azul-oscuro: #164e96; --verde: #188a52;
+  --rojo: #c0392b; --ambar: #b9770e; --fondo: #f2f4f7;
+  --borde: #d8dee6; --texto: #22303f; --texto-suave: #64748b;
+  --blanco: #fff; --radio: 8px;
+}
+* { box-sizing: border-box; }
+body { margin: 0; font-family: "Segoe UI", Tahoma, Arial, sans-serif;
+  background: var(--fondo); color: var(--texto); font-size: 15px; }
+a { color: var(--azul); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1 { font-size: 1.35rem; margin: 0 0 4px; }
+h2 { font-size: 1.1rem; margin: 0 0 12px; }
+.subtitulo { color: var(--texto-suave); font-size: .85rem; margin: 0 0 16px; }
+
+/* ===== Barra superior ===== */
+.topbar { background: var(--blanco); border-bottom: 1px solid var(--borde);
+  position: sticky; top: 0; z-index: 50; }
+.topbar-int { max-width: 1200px; margin: 0 auto; padding: 10px 20px;
+  display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.marca { font-weight: 700; font-size: 1.1rem; color: var(--azul); }
+.nav-links { display: flex; gap: 4px; flex-wrap: wrap; }
+.nav-links a { color: var(--texto); padding: 6px 12px; border-radius: var(--radio);
+  font-weight: 500; font-size: .9rem; }
+.nav-links a:hover { background: #e8eef7; text-decoration: none; }
+.usuario { font-size: .85rem; color: var(--texto-suave); display: flex; align-items: center; gap: 10px; }
+.usuario button { background: none; border: none; color: var(--rojo); cursor: pointer;
+  font-size: .85rem; font-weight: 600; }
+
+/* ===== Contenido ===== */
+.contenido { max-width: 1200px; margin: 0 auto; padding: 20px; padding-bottom: 70px; }
+
+/* ===== Paneles ===== */
+.panel { background: var(--blanco); border: 1px solid var(--borde);
+  border-radius: var(--radio); padding: 18px; margin-bottom: 16px; }
+.panel-cabecera { display: flex; align-items: center; justify-content: space-between;
+  gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+
+/* ===== Botones ===== */
+.btn { display: inline-block; border: 1px solid transparent; cursor: pointer;
+  padding: 8px 16px; border-radius: var(--radio); font-size: .9rem; font-weight: 600;
+  text-decoration: none; line-height: 1.2; }
+.btn:hover { text-decoration: none; filter: brightness(.95); }
+.btn-azul { background: var(--azul); color: #fff; }
+.btn-verde { background: var(--verde); color: #fff; }
+.btn-rojo { background: var(--rojo); color: #fff; }
+.btn-borde { background: var(--blanco); color: var(--texto); border-color: var(--borde); }
+.btn-chico { padding: 4px 10px; font-size: .8rem; }
+
+/* ===== Tablas ===== */
+table { width: 100%; border-collapse: collapse; background: var(--blanco); }
+thead th { text-align: left; font-size: .72rem; text-transform: uppercase; letter-spacing: .04em;
+  color: var(--texto-suave); padding: 10px 12px; border-bottom: 2px solid var(--borde); background: #f7f9fc; }
+tbody td { padding: 9px 12px; border-bottom: 1px solid #e6ebf1; font-size: .9rem; }
+tbody tr:hover { background: #f4f8fd; }
+
+/* ===== Formularios ===== */
+form p, .campo { margin: 0 0 12px; }
+label { display: block; font-weight: 600; font-size: .85rem; margin-bottom: 4px; }
+input, select, textarea { width: 100%; padding: 8px 10px; border: 1px solid var(--borde);
+  border-radius: var(--radio); font-size: .92rem; font-family: inherit;
+  background: var(--blanco); color: var(--texto); }
+input:focus, select:focus, textarea:focus { outline: 2px solid var(--azul); border-color: var(--azul); }
+.helptext { font-size: .75rem; color: var(--texto-suave); display: block; margin-top: 2px; }
+.errorlist { color: var(--rojo); font-size: .8rem; margin: 2px 0; padding-left: 16px; }
+.form-fila { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
+
+/* ===== Mensajes ===== */
+.mensajes { margin-bottom: 14px; }
+.mensaje { padding: 10px 14px; border-radius: var(--radio); margin-bottom: 8px; font-size: .9rem; }
+.mensaje.ok { background: #e5f6ec; color: var(--verde); border: 1px solid #bfe6cf; }
+.mensaje.error { background: #fdecea; color: var(--rojo); border: 1px solid #f5c6c0; }
+.mensaje.info { background: #e8f1fc; color: var(--azul); border: 1px solid #c4dbf5; }
+
+/* ===== Badges ===== */
+.badge { display: inline-block; padding: 2px 10px; border-radius: 999px; font-size: .72rem; font-weight: 700; }
+.badge-verde { background: #e5f6ec; color: var(--verde); }
+.badge-rojo { background: #fdecea; color: var(--rojo); }
+.badge-ambar { background: #fdf3e3; color: var(--ambar); }
+.badge-azul { background: #e8f1fc; color: var(--azul); }
+
+/* ===== Barra de teclas F ===== */
+.barra-teclas { position: fixed; bottom: 0; left: 0; right: 0; background: #22303f;
+  color: #cbd5e1; padding: 8px 20px; display: flex; gap: 18px; flex-wrap: wrap;
+  font-size: .78rem; z-index: 60; }
+.barra-teclas kbd { background: #3b4a5c; color: #fff; border-radius: 4px; padding: 1px 7px;
+  font-family: inherit; font-weight: 700; margin-right: 4px; }
+
+/* ===== Login ===== */
+.login-contenedor { min-height: 100vh; display: flex; align-items: center;
+  justify-content: center; background: linear-gradient(160deg, #164e96, #1e65c0); }
+.login-caja { background: var(--blanco); border-radius: 12px; padding: 32px; width: 340px;
+  box-shadow: 0 12px 40px rgba(0,0,0,.25); }
+.login-caja h1 { text-align: center; color: var(--azul); margin-bottom: 20px; }
+
+/* ===== POS ===== */
+.pos-grid { display: grid; grid-template-columns: 1fr 380px; gap: 16px; }
+@media (max-width: 900px) { .pos-grid { grid-template-columns: 1fr; } }
+.ticket-linea { display: flex; justify-content: space-between; gap: 8px; padding: 6px 0;
+  border-bottom: 1px dashed var(--borde); font-size: .9rem; }
+.ticket-total { font-size: 1.25rem; font-weight: 800; text-align: right; padding: 10px 0; }
+/* ===== POS: filas de agregado y ticket ===== */
+.fila-agregar { display: flex; gap: 6px; align-items: center; }
+.fila-agregar input { width: 70px; }
+.ticket-derecha { display: inline-flex; gap: 8px; align-items: center; }
+.form-inline { display: inline; }
+
+/* ===== Escala POS: pantallas medianas y grandes ===== */
+body { font-size: 16px; }
+.contenido { max-width: 1400px; }
+.topbar-int { padding: 14px 24px; }
+.marca { font-size: 1.3rem; }
+.nav-links a { font-size: 1rem; padding: 8px 14px; }
+.usuario { font-size: .95rem; }
+h1 { font-size: 1.6rem; }
+h2 { font-size: 1.2rem; }
+.btn { padding: 10px 20px; font-size: 1rem; }
+.btn-chico { padding: 5px 12px; font-size: .85rem; }
+input, select, textarea { font-size: 1rem; padding: 10px 12px; }
+thead th { font-size: .8rem; padding: 12px 14px; }
+tbody td { font-size: 1rem; padding: 11px 14px; }
+.ticket-total { font-size: 1.6rem; }
+.pos-grid { grid-template-columns: 1fr 420px; }
+.barra-teclas { font-size: .95rem; padding: 10px 24px; gap: 22px; }
+.barra-teclas kbd { padding: 2px 9px; font-size: .9rem; }
+
+@media (min-width: 1600px) {
+  body { font-size: 17px; }
+  .contenido { max-width: 1550px; }
+  .btn { padding: 12px 24px; }
+  .ticket-total { font-size: 1.9rem; }
+  .pos-grid { grid-template-columns: 1fr 460px; }
+}

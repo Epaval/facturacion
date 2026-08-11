@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Panel principal</h1>
+<p class="subtitulo">Resumen del día</p>
+
+<div class="form-fila" style="margin-bottom:16px">
+  <div class="panel"><h2>Ventas de hoy</h2><strong style="font-size:1.6rem">{{ ventas_hoy }}</strong></div>
+  <div class="panel"><h2>Ingresos de hoy</h2><strong style="font-size:1.6rem">Bs {{ total_hoy }}</strong></div>
+  <div class="panel"><h2>Productos activos</h2><strong style="font-size:1.6rem">{{ total_productos }}</strong></div>
+  <div class="panel"><h2>Stock bajo</h2><strong style="font-size:1.6rem;{% if stock_bajo %}color:var(--rojo){% endif %}">{{ stock_bajo }}</strong></div>
+</div>
+
+<div class="panel">
+  <div class="panel-cabecera"><h2>Últimas ventas</h2><a class="btn btn-borde btn-chico" href="{% url 'ventas:list' %}">Ver todas</a></div>
+  <table>
+    <thead><tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Cajero</th><th>Total</th><th>Estado</th></tr></thead>
+    <tbody>
+    {% for v in ultimas_ventas %}
+      <tr>
+        <td><a href="{% url 'ventas:detail' v.pk %}">#{{ v.numero }}</a></td>
+        <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+        <td>{{ v.cliente|default:"Consumidor final" }}</td>
+        <td>{{ v.usuario.full_name }}</td>
+        <td><strong>Bs {{ v.total }}</strong></td>
+        <td>{% if v.estado == 'completada' %}<span class="badge badge-verde">Completada</span>{% else %}<span class="badge badge-rojo">Anulada</span>{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">Aún no hay ventas registradas.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel">
+  <div class="panel-cabecera">
+    <h1>Clientes</h1>
+    <a class="btn btn-azul" href="{% url 'clientes:create' %}">+ Registrar cliente (F4)</a>
+  </div>
+  <form method="get" class="form-fila" style="margin-bottom:12px">
+    <input type="text" name="q" value="{{ q }}" placeholder="Buscar por nombre o CI/NIT (F3)" autofocus>
+    <button class="btn btn-borde" type="submit">Buscar</button>
+  </form>
+  <table>
+    <thead><tr><th>Nombre</th><th>CI/NIT</th><th>Teléfono</th><th>Saldo pendiente</th><th></th></tr></thead>
+    <tbody>
+    {% for c in object_list %}
+      <tr>
+        <td>{{ c.full_name }}</td>
+        <td>{{ c.ci_nit|default:"—" }}</td>
+        <td>{{ c.telefono|default:"—" }}</td>
+        <td>{% if c.saldo_pendiente %}<span class="badge badge-ambar">Bs {{ c.saldo_pendiente }}</span>{% else %}—{% endif %}</td>
+        <td><a class="btn btn-borde btn-chico" href="{% url 'clientes:update' c.pk %}">Editar</a></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="5">No hay clientes.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  {% if is_paginated %}
+  <p style="margin-top:10px">
+    {% if page_obj.has_previous %}<a href="?q={{ q }}&page={{ page_obj.previous_page_number }}">← Anterior</a>{% endif %}
+    Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}
+    {% if page_obj.has_next %}<a href="?q={{ q }}&page={{ page_obj.next_page_number }}">Siguiente →</a>{% endif %}
+  </p>
+  {% endif %}
+</div>
+{% endblock %}
