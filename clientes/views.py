@@ -33,6 +33,15 @@ class ClienteListView(LoginRequiredMixin, ListView):
 
 
 class ClienteCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+
+    def form_valid(self, form):
+        response = super().form_valid(form)
+        if self.request.POST.get("next"):
+            self.request.session["pos_cliente"] = str(self.object.pk)
+        return response
+
+    def get_success_url(self):
+        return self.request.POST.get("next") or str(reverse_lazy("clientes:list"))
     model = Cliente
     form_class = ClienteForm
     template_name = "clientes/cliente_form.html"

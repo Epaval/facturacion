@@ -67,3 +67,37 @@ document.addEventListener("keydown", function (e) {
     }
   }
 });
+
+// Mensajes como toast que se ocultan solos
+document.addEventListener("DOMContentLoaded", function () {
+  document.querySelectorAll(".mensaje").forEach(function (m) {
+    const ms = m.classList.contains("error") ? 6000 : 2500;
+    setTimeout(function () {
+      m.style.transition = "opacity .4s";
+      m.style.opacity = "0";
+      setTimeout(function () { m.remove(); }, 400);
+    }, ms);
+  });
+});
+
+// ===== Flujo de teclado en cobro (sin mouse) =====
+(function () {
+  const monto = document.querySelector("input[name='monto']");
+  const metodo = document.querySelector("select[name='metodo']");
+  const qcli = document.querySelector("input[name='q_cliente']");
+  if (!monto && !qcli) return; // no es la pantalla de cobro
+
+  window.addEventListener("load", function () {
+    // Sin cliente: foco en el buscador. Con cliente: directo al método de pago.
+    if (qcli && !document.querySelector(".cliente-card")) { qcli.focus(); return; }
+    if (metodo) metodo.focus();
+  });
+
+  if (metodo && monto) {
+    // Enter en el select pasa al monto (flechas cambian el método)
+    metodo.addEventListener("keydown", function (e) {
+      if (e.key === "Enter") { e.preventDefault(); monto.focus(); }
+    });
+    // Enter en el monto agrega el pago y el foco regresa al select
+  }
+})();

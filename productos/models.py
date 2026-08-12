@@ -27,6 +27,7 @@ class Producto(models.Model):
     stock_minimo = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     unidad = models.CharField(max_length=10, choices=UNIDADES, default="unidad")
     activo = models.BooleanField(default=True)
+    grava_iva = models.BooleanField("Paga IVA (16%)", default=False)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
 
     class Meta:

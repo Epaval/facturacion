@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
@@ -122,6 +123,10 @@ class CajaRegularizarView(LoginRequiredMixin, View):
         sel_id = request.GET.get("sel")
         seleccionado = Cliente.objects.filter(pk=sel_id).first() if sel_id else None
         resultados = None
+        if q_cliente and re.fullmatch(r"(V|J|G)?\d{6,9}", q_cliente.upper()):
+            exacto = Cliente.objects.filter(ci_nit__iexact=q_cliente).first()
+            if exacto:
+                return redirect(f"{request.path}?sel={exacto.pk}")
         if q_cliente:
             resultados = Cliente.objects.filter(
                 Q(ci_nit__icontains=q_cliente)

@@ -21,6 +21,8 @@ class Venta(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     descuento = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    base_imponible = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    monto_iva = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     monto_recibido = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     cambio = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     metodo_pago = models.CharField(max_length=15, choices=METODOS_PAGO, default="efectivo")

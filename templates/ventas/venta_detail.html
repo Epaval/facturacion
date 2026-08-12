@@ -15,7 +15,9 @@
     {% endfor %}
     </tbody>
   </table>
-  <p style="text-align:right">Subtotal: Bs {{ venta.subtotal }}</p>
+  <p style="text-align:right">Subtotal: Bs {{ venta.subtotal }}
+  {% if venta.monto_iva %}<br>Base imponible: Bs {{ venta.base_imponible }} · IVA 16%: Bs {{ venta.monto_iva }}{% endif %}</p>
+  <p style="text-align:right"><strong>Total productos: {{ total_items }}</strong></p>
   <div class="ticket-total">TOTAL: Bs {{ venta.total }}</div>
   {% if venta.pagos.all %}
   <h2 style="margin-top:14px">Pagos</h2>

@@ -1,3 +1,4 @@
+import re
 from decimal import Decimal, InvalidOperation
 
 from django.contrib import messages
@@ -12,6 +13,47 @@ from clientes.models import Cliente
 from productos.models import Producto
 
 from .models import Caja, Pago, Venta
+
+
+def desglose_iva(total, gravado=None):
+    """Precios con IVA 16% incluido. gravado = parte del total que paga IVA."""
+    dos = Decimal("0.01")
+    if gravado is None:
+        gravado = total
+    base_grav = (gravado / Decimal("1.16")).quantize(dos)
+    iva = (gravado - base_grav).quantize(dos)
+    base = (total - gravado) + base_grav
+    return base.quantize(dos), iva
+
+
+def monto_gravado(lineas):
+    """Suma los subtotales de líneas cuyo producto paga IVA (dato en vivo)."""
+    ids = [l["producto_id"] for l in lineas]
+    gravados = set(
+        Producto.objects.filter(pk__in=ids, grava_iva=True).values_list("pk", flat=True)
+    )
+    return sum((Decimal(l["subtotal"]) for l in lineas if l["producto_id"] in gravados), Decimal("0.00"))
+
+
+def total_items(lineas):
+    """Ítems físicos: unidades suman su cantidad; pesables (kg/g/lb) cuentan 1."""
+    ids = [l["producto_id"] for l in lineas]
+    pesables = set(
+        Producto.objects.filter(pk__in=ids, unidad__in=["kg", "g", "lb"]).values_list("pk", flat=True)
+    )
+    items = 0
+    for l in lineas:
+        if l["producto_id"] in pesables:
+            items += 1
+        else:
+            items += int(Decimal(l["cantidad"]))
+    return items
+
+
+def ctx_iva(lineas, total):
+    gravado = monto_gravado(lineas)
+    base, iva = desglose_iva(total, gravado)
+    return {"base_imponible": base, "iva_incluido": iva, "total_items": total_items(lineas)}
 
 
 class POSView(LoginRequiredMixin, View):
@@ -45,6 +87,25 @@ class POSView(LoginRequiredMixin, View):
         q = request.GET.get("q", "").strip()
         productos = None
 
+        # Modal de cliente (F10): CI/RIF exacto anexa solo
+        cliente_q = request.GET.get("cliente_q", "").strip()
+        modal_cliente = None
+        if cliente_q:
+            modal_cliente = {"q": cliente_q, "no_registrado": False, "candidatos": None}
+            if re.fullmatch(r"(V|J|G)?\d{6,9}", cliente_q.upper()):
+                exacto = Cliente.objects.filter(ci_nit__iexact=cliente_q).first()
+                if exacto:
+                    request.session["pos_cliente"] = str(exacto.pk)
+                    messages.success(request, f"Cliente: {exacto.full_name}")
+                    return redirect("ventas:pago")
+                modal_cliente["no_registrado"] = True
+            else:
+                modal_cliente["candidatos"] = Cliente.objects.filter(
+                    Q(nombres__icontains=cliente_q)
+                    | Q(apellidos__icontains=cliente_q)
+                    | Q(ci_nit__icontains=cliente_q)
+                )[:8]
+
         # Clic en fila de resultados: agrega 1 o abre modal si es pesable
         agregar_id = request.GET.get("agregar")
         if agregar_id:
@@ -54,7 +115,7 @@ class POSView(LoginRequiredMixin, View):
                     total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
                     return render(request, "ventas/pos.html", {
                         "lineas": lineas, "productos": None, "q": "",
-                        "total": total, "modal_producto": producto,
+                        "total": total, **ctx_iva(lineas, total), "modal_producto": producto,
                         "title": "Nueva venta (POS)",
                     })
                 error = self._agregar(lineas, producto, Decimal("1"))
@@ -79,7 +140,7 @@ class POSView(LoginRequiredMixin, View):
                     "lineas": lineas,
                     "productos": None,
                     "q": "",
-                    "total": total,
+                    "total": total, **ctx_iva(lineas, total),
                     "modal_producto": exacto,
                     "title": "Nueva venta (POS)",
                 })
@@ -100,7 +161,8 @@ class POSView(LoginRequiredMixin, View):
             "lineas": lineas,
             "productos": productos,
             "q": q,
-            "total": total,
+            "total": total, **ctx_iva(lineas, total),
+            "modal_cliente": modal_cliente,
             "title": "Nueva venta (POS)",
         })
 
@@ -132,11 +194,25 @@ class POSView(LoginRequiredMixin, View):
         elif accion == "vaciar":
             request.session["pos_lineas"] = []
 
+        elif accion == "cliente_pos":
+            request.session["pos_cliente"] = request.POST.get("cliente") or None
+            return redirect("ventas:pago")
+
         elif accion == "pagar":
             if not lineas:
                 messages.info(request, "El ticket está vacío")
                 return redirect("ventas:pos")
-            return redirect("ventas:pago")
+            if request.session.get("pos_cliente"):
+                return redirect("ventas:pago")
+            total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
+            return render(request, "ventas/pos.html", {
+                "lineas": lineas,
+                "productos": None,
+                "q": "",
+                "total": total, **ctx_iva(lineas, total),
+                "modal_cliente": {"q": "", "no_registrado": False, "candidatos": None},
+                "title": "Nueva venta (POS)",
+            })
 
         return redirect("ventas:pos")
 
@@ -163,6 +239,13 @@ class PagoView(LoginRequiredMixin, View):
         q_cliente = request.GET.get("q_cliente", "").strip()
         resultados_clientes = None
         if q_cliente:
+            # CI/RIF exacto: selecciona sin mouse (como el escáner de productos)
+            if re.fullmatch(r"(V|J|G)?\d{6,9}", q_cliente.upper()):
+                exacto = Cliente.objects.filter(ci_nit__iexact=q_cliente).first()
+                if exacto:
+                    request.session["pos_cliente"] = str(exacto.pk)
+                    messages.success(request, f"Cliente: {exacto.full_name}")
+                    return redirect("ventas:pago")
             resultados_clientes = Cliente.objects.filter(
                 Q(ci_nit__icontains=q_cliente)
                 | Q(nombres__icontains=q_cliente)
@@ -172,7 +255,7 @@ class PagoView(LoginRequiredMixin, View):
         pagos_vista = [dict(p, metodo_label=etiquetas.get(p["metodo"], p["metodo"])) for p in pagos]
         return render(request, "ventas/pago.html", {
             "lineas": lineas, "pagos": pagos_vista,
-            "total": total, "pagado": pagado,
+            "total": total, **ctx_iva(lineas, total), "pagado": pagado,
             "falta": max(total - pagado, Decimal("0")),
             "cambio": max(pagado - total, Decimal("0")),
             "cliente": cliente,
@@ -232,9 +315,12 @@ class PagoView(LoginRequiredMixin, View):
                 metodos = {p["metodo"] for p in pagos}
                 metodo_final = metodos.pop() if len(metodos) == 1 else "mixto"
 
+                gravado = monto_gravado(lineas)
+                base, iva = desglose_iva(total, gravado)
                 venta = Venta.objects.create(
                     cliente=cliente, usuario=request.user,
                     subtotal=total, descuento=0, total=total,
+                    base_imponible=base, monto_iva=iva,
                     monto_recibido=pagado,
                     cambio=max(pagado - total, Decimal("0")),
                     metodo_pago=metodo_final,
@@ -290,4 +376,8 @@ class VentaDetailView(LoginRequiredMixin, DetailView):
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = f"Venta #{self.object.numero}"
+        items = 0
+        for d in self.object.detalles.select_related("producto"):
+            items += 1 if d.producto.es_pesable else int(d.cantidad)
+        ctx["total_items"] = items
         return ctx

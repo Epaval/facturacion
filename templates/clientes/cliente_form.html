@@ -1,10 +1,21 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="panel" style="max-width:700px">
+<div class="panel" style="max-width:760px">
   <h1>{{ title }}</h1>
+  <p class="subtitulo">Datos del cliente para facturación y reclamos.</p>
   <form method="post" data-guardar>
     {% csrf_token %}
-    {{ form.as_p }}
+    {% if request.GET.next %}<input type="hidden" name="next" value="{{ request.GET.next }}">{% endif %}
+    <div class="form-fila">
+      <p><label>Nombres *</label>{{ form.nombres }}{{ form.nombres.errors }}</p>
+      <p><label>Apellidos</label>{{ form.apellidos }}{{ form.apellidos.errors }}</p>
+    </div>
+    <div class="form-fila">
+      <p><label>CI / RIF</label>{{ form.ci_nit }}{{ form.ci_nit.errors }}
+        <span class="helptext">Natural: 12345678 o V… · Jurídico: J… · Gubernamental: G…</span></p>
+      <p><label>Teléfono</label>{{ form.telefono }}{{ form.telefono.errors }}</p>
+    </div>
+    <p><label>Dirección</label>{{ form.direccion }}{{ form.direccion.errors }}</p>
     <div style="display:flex;gap:10px;margin-top:14px">
       <button type="submit" class="btn btn-verde">Guardar (F8)</button>
       <a class="btn btn-borde" href="{% url 'clientes:list' %}">Cancelar (Esc)</a>

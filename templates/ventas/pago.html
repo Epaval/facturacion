@@ -1,18 +1,12 @@
 {% extends "base.html" %}
 
-
 {% block content %}
 <h1>Cobro de venta</h1>
 <p class="subtitulo">Cliente obligatorio. La venta se confirma solo con pago igual o mayor al total; si es mayor se muestra el vuelto.</p>
 
 <div class="pos-grid">
   <div class="panel">
-    <h2>Resumen del ticket</h2>
-    {% for l in lineas %}
-      <div class="ticket-linea"><span>{{ l.nombre }} × {{ l.cantidad }}</span><strong>Bs {{ l.subtotal }}</strong></div>
-    {% endfor %}
-
-    <p style="margin-top:14px"><label>Cliente (obligatorio)</label></p>
+    <h2>Cliente (obligatorio)</h2>
     {% if cliente %}
       <div class="cliente-card">
         <div>
@@ -29,7 +23,7 @@
     {% else %}
       <form method="get">
         <input type="text" name="q_cliente" value="{{ q_cliente }}"
-               placeholder="CI, RIF (V/G/J-…) o nombre">
+               placeholder="CI, RIF (V/G/J-…) o nombre (F3)">
       </form>
       {% if resultados_clientes is not None %}
         <div style="margin-top:8px">
@@ -74,9 +68,8 @@
       <input type="hidden" name="accion" value="agregar_pago">
       <select name="metodo" style="width:auto">
         <option value="efectivo">Efectivo</option>
-        <option value="pago_movil">Pago Móvil</option>
-        <option value="tarjeta">Tarjeta</option>
-        <option value="bio_pago">Bio Pago</option>    
+        <option value="transferencia">Transferencia</option>
+        <option value="punto_venta">Punto de venta</option>
       </select>
       <input type="number" name="monto" step="0.01" min="0.01" placeholder="Monto Bs" required style="width:120px">
       <button class="btn btn-azul" type="submit">Agregar pago</button>
@@ -85,8 +78,12 @@
   </div>
 
   <div class="panel">
-    <h2>Total a pagar</h2>
-    <div class="ticket-total">Bs {{ total }}</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
+      <span class="badge badge-azul" style="font-size:1rem;padding:6px 14px">{{ total_items }} producto{{ total_items|pluralize:"s" }}</span>
+      <div class="ticket-total" style="padding:6px 0">Bs {{ total }}</div>
+    </div>
+    <div class="ticket-linea"><span>Base imponible</span><strong>Bs {{ base_imponible }}</strong></div>
+    <div class="ticket-linea"><span>IVA 16% incluido</span><strong>Bs {{ iva_incluido }}</strong></div>
     <div class="ticket-linea"><span>Pagado</span><strong>Bs {{ pagado }}</strong></div>
     {% if cambio %}
       <div class="ticket-linea"><span>Vuelto al cliente</span><strong style="color:var(--verde)">Bs {{ cambio }}</strong></div>
@@ -98,7 +95,7 @@
     <form method="post" data-confirmar style="margin-top:14px">
       {% csrf_token %}
       <input type="hidden" name="accion" value="confirmar">
-      <button class="btn btn-verde" style="width:100%" type="submit"
+      <button class="btn {% if completo %}btn-verde{% else %}btn-ambar{% endif %}" style="width:100%" type="submit"
               {% if not cliente or not completo %}disabled{% endif %}>
         {% if not cliente %}Selecciona un cliente{% elif not completo %}Falta Bs {{ falta }} para confirmar{% else %}Confirmar venta (F9){% if cambio %} · Vuelto Bs {{ cambio }}{% endif %}{% endif %}
       </button>
@@ -109,5 +106,22 @@
       <button class="btn btn-borde" style="width:100%" type="submit">Volver al ticket (Esc)</button>
     </form>
   </div>
+</div>
+
+<div class="panel" style="margin-top:16px">
+  <h2>Resumen del ticket</h2>
+  <table>
+    <thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
+    <tbody>
+    {% for l in lineas %}
+      <tr>
+        <td>{{ l.nombre }}</td>
+        <td>{{ l.cantidad }}</td>
+        <td>Bs {{ l.subtotal }}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  <p style="text-align:right;margin-top:10px"><strong>Total productos: {{ total_items }}</strong></p>
 </div>
 {% endblock %}
