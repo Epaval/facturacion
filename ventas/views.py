@@ -193,6 +193,7 @@ class POSView(LoginRequiredMixin, View):
 
         elif accion == "vaciar":
             request.session["pos_lineas"] = []
+            request.session["pos_cliente"] = None
 
         elif accion == "cliente_pos":
             request.session["pos_cliente"] = request.POST.get("cliente") or None
@@ -380,4 +381,6 @@ class VentaDetailView(LoginRequiredMixin, DetailView):
         for d in self.object.detalles.select_related("producto"):
             items += 1 if d.producto.es_pesable else int(d.cantidad)
         ctx["total_items"] = items
+        from core.models import ConfigNegocio
+        ctx["config"] = ConfigNegocio.get()
         return ctx

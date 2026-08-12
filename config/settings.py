@@ -2,7 +2,15 @@ import os
 from pathlib import Path
 import environ
 
-BASE_DIR = Path(__file__).resolve().parent.parent
+import sys
+
+if getattr(sys, "frozen", False):
+    # Empaquetado con PyInstaller: datos junto al .exe, código en el bundle
+    BASE_DIR = Path(sys.executable).resolve().parent
+    BUNDLE_DIR = Path(sys._MEIPASS)
+else:
+    BASE_DIR = Path(__file__).resolve().parent.parent
+    BUNDLE_DIR = BASE_DIR
 env = environ.Env(DEBUG=(bool, False))
 environ.Env.read_env(BASE_DIR / '.env', overwrite=False)
 
@@ -33,6 +41,8 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
+    'core.middleware.SetupMiddleware',
+    'core.middleware.LicenseMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'axes.middleware.AxesMiddleware',

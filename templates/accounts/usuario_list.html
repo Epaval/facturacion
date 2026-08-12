@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel">
+  <div class="panel-cabecera">
+    <h1>Usuarios del sistema</h1>
+    <a class="btn btn-azul" href="{% url 'accounts:usuario_new' %}">+ Nuevo usuario</a>
+  </div>
+  <table>
+    <thead><tr><th>Usuario</th><th>Nombre</th><th>Rol</th><th>Estado</th><th>Último acceso</th><th></th></tr></thead>
+    <tbody>
+    {% for u in usuarios %}
+      <tr>
+        <td><strong>{{ u.username }}</strong></td>
+        <td>{{ u.full_name }}</td>
+        <td><span class="badge badge-azul">{{ u.get_rol_display }}</span></td>
+        <td>{% if u.is_active %}<span class="badge badge-verde">Activo</span>{% else %}<span class="badge badge-rojo">Inactivo</span>{% endif %}</td>
+        <td>{{ u.last_login|date:"d/m/Y H:i"|default:"nunca" }}</td>
+        <td><a class="btn btn-borde btn-chico" href="{% url 'accounts:usuario_edit' u.pk %}">Editar</a></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -67,9 +67,10 @@
       {% csrf_token %}
       <input type="hidden" name="accion" value="agregar_pago">
       <select name="metodo" style="width:auto">
-        <option value="efectivo">Efectivo</option>
-        <option value="transferencia">Transferencia</option>
+        <option value="efectivo">Efectivo</option>        
         <option value="punto_venta">Punto de venta</option>
+        <option value="bio_pago">Bio Pago</option>
+        <option value="transferencia">Transferencia</option>
       </select>
       <input type="number" name="monto" step="0.01" min="0.01" placeholder="Monto Bs" required style="width:120px">
       <button class="btn btn-azul" type="submit">Agregar pago</button>

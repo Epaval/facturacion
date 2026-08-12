@@ -1,38 +1,81 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="panel" style="max-width:700px">
-  <div class="panel-cabecera">
-    <h1>Venta #{{ venta.numero }}</h1>
-    <span class="badge {% if venta.estado == 'completada' %}badge-verde{% else %}badge-rojo{% endif %}">{{ venta.get_estado_display }}</span>
+<div class="ticket-printable">
+  <div class="ticket-header">
+    <div>
+      <h1 style="margin:0">{{ config.nombre|default:"Mi Negocio" }}</h1>
+      <p style="margin:4px 0">{{ config.direccion }}</p>
+      <p style="margin:0"><strong>RIF:</strong> {{ config.rif }}  ·  <strong>NIT:</strong> {{ config.nit|default:"—" }}</p>
+      <p style="margin:0">Tel: {{ config.telefono|default:"—" }}</p>
+    </div>
+    <div style="text-align:right">
+      <h2 style="margin:0">FACTURA</h2>
+      <p style="margin:4px 0"><strong>N°:</strong> {{ venta.numero|stringformat:"06d" }}</p>
+      <p style="margin:0"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
+      {% if config.serial_impresora_fiscal %}
+      <p style="margin:0"><strong>Serial fiscal (control):</strong><br>{{ config.serial_impresora_fiscal }}</p>
+      {% endif %}
+    </div>
   </div>
-  <p class="subtitulo">{{ venta.fecha|date:"d/m/Y H:i" }} · Atendió: {{ venta.usuario.full_name }}</p>
-  <p><strong>Cliente:</strong> {{ venta.cliente|default:"Consumidor final" }} · <strong>Pago:</strong> {{ venta.get_metodo_pago_display }}</p>
+
+  <div class="ticket-cliente">
+    <p style="margin:0"><strong>Cliente:</strong> {% if venta.cliente %}{{ venta.cliente.full_name }}{% else %}Consumidor final{% endif %}</p>
+    <p style="margin:0"><strong>CI/RIF:</strong> {{ venta.cliente.ci_nit|default:"—" }} · <strong>Tel:</strong> {{ venta.cliente.telefono|default:"—" }}</p>
+    <p style="margin:0"><strong>Dirección:</strong> {{ venta.cliente.direccion|default:"—" }}</p>
+  </div>
+
   <table>
-    <thead><tr><th>Producto</th><th>Cant.</th><th>Precio</th><th>Subtotal</th></tr></thead>
+    <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
     <tbody>
     {% for d in venta.detalles.all %}
-      <tr><td>{{ d.producto.nombre }}</td><td>{{ d.cantidad }}</td><td>Bs {{ d.precio_unitario }}</td><td>Bs {{ d.subtotal }}</td></tr>
+      <tr>
+        <td>{{ d.producto.nombre }}{% if d.producto.grava_iva %} <small>(G)</small>{% endif %}</td>
+        <td>{{ d.cantidad }} {{ d.producto.unidad }}</td>
+        <td>Bs {{ d.precio_unitario }}</td>
+        <td>Bs {{ d.subtotal }}</td>
+      </tr>
     {% endfor %}
     </tbody>
   </table>
-  <p style="text-align:right">Subtotal: Bs {{ venta.subtotal }}
-  {% if venta.monto_iva %}<br>Base imponible: Bs {{ venta.base_imponible }} · IVA 16%: Bs {{ venta.monto_iva }}{% endif %}</p>
-  <p style="text-align:right"><strong>Total productos: {{ total_items }}</strong></p>
-  <div class="ticket-total">TOTAL: Bs {{ venta.total }}</div>
-  {% if venta.pagos.all %}
-  <h2 style="margin-top:14px">Pagos</h2>
-  <table>
-    <thead><tr><th>Método</th><th>Monto</th></tr></thead>
-    <tbody>
-      {% for p in venta.pagos.all %}
-      <tr><td>{{ p.get_metodo_display }}</td><td>Bs {{ p.monto }}</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+  <div class="ticket-totales">
+    <p><span>Subtotal ({{ total_items }} producto{{ total_items|pluralize:"s" }}):</span><strong>Bs {{ venta.subtotal }}</strong></p>
+    <p><span>Base imponible:</span><strong>Bs {{ venta.base_imponible }}</strong></p>
+    <p><span>IVA 16%:</span><strong>Bs {{ venta.monto_iva }}</strong></p>
+    <p class="ticket-total-final"><span>TOTAL:</span><strong>Bs {{ venta.total }}</strong></p>
+    <p><span>Pagado ({{ venta.get_metodo_pago_display }}):</span><strong>Bs {{ venta.monto_recibido }}</strong></p>
+    {% if venta.cambio %}
+    <p><span>Vuelto:</span><strong>Bs {{ venta.cambio }}</strong></p>
+    {% endif %}
+  </div>
+
+  {% if config.notas_factura %}
+  <div class="ticket-notas">{{ config.notas_factura }}</div>
   {% endif %}
-  {% if venta.cambio %}
-  <p style="text-align:right"><strong>Vuelto: Bs {{ venta.cambio }}</strong></p>
-  {% endif %}
-  <a class="btn btn-borde" href="{% url 'ventas:list' %}">Volver (Esc)</a>
+
+  <div class="ticket-footer">
+    <p>Factura generada por {{ venta.usuario.full_name }}</p>
+  </div>
 </div>
+
+<div style="margin-top:14px;display:flex;gap:8px">
+  <a class="btn btn-azul" href="javascript:window.print()">Imprimir (F8)</a>
+  <a class="btn btn-borde" href="{% url 'ventas:list' %}">Volver al historial</a>
+</div>
+
+<style>
+@media print {
+  body * { visibility: hidden; }
+  .ticket-printable, .ticket-printable * { visibility: visible; }
+  .ticket-printable { position: absolute; left: 0; top: 0; width: 100%; }
+  .btn, .topbar-int, .barra-teclas, .mensajes { display: none !important; }
+}
+.ticket-header, .ticket-cliente { padding: 12px 0; border-bottom: 2px solid #222; }
+.ticket-header { display: flex; justify-content: space-between; }
+.ticket-totales { padding: 12px 0; }
+.ticket-totales p { display: flex; justify-content: space-between; margin: 4px 0; }
+.ticket-total-final { font-size: 1.4rem; font-weight: 700; border-top: 2px solid #222; border-bottom: 2px solid #222; padding: 8px 0 !important; }
+.ticket-notas { padding: 10px 0; font-style: italic; text-align: center; border-top: 1px dashed #aaa; }
+.ticket-footer { padding-top: 10px; text-align: center; font-size: .9rem; color: #666; }
+</style>
 {% endblock %}

@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:760px;margin:30px auto">
+  <h1>Bienvenido — Primer arranque</h1>
+  <p class="subtitulo">Configura tu cuenta de administrador y los datos del negocio. Esta pantalla aparece solo una vez.</p>
+
+  <form method="post" enctype="multipart/form-data" data-guardar>
+    {% csrf_token %}
+    <h2>Cuenta de administrador</h2>
+    <div class="form-fila">
+      <p><label>Usuario *</label><input type="text" name="username" required autofocus placeholder="admin"></p>
+      <p><label>Nombres</label><input type="text" name="nombres" placeholder="Administrador"></p>
+    </div>
+    <div class="form-fila">
+      <p><label>Apellidos</label><input type="text" name="apellidos"></p>
+      <p>&nbsp;</p>
+    </div>
+    <div class="form-fila">
+      <p><label>Contraseña * (mín 6)</label><input type="password" name="password1" required></p>
+      <p><label>Confirmar contraseña *</label><input type="password" name="password2" required></p>
+    </div>
+
+    <h2 style="margin-top:20px">Datos del negocio</h2>
+    <div class="form-fila">
+      <p><label>Nombre del negocio *</label>{{ form_cfg.nombre }}</p>
+      <p><label>Teléfono</label>{{ form_cfg.telefono }}</p>
+    </div>
+    <div class="form-fila">
+      <p><label>RIF *</label>{{ form_cfg.rif }}<span class="helptext">Ej: J-12345678-9</span></p>
+      <p><label>NIT</label>{{ form_cfg.nit }}</p>
+    </div>
+    <p><label>Dirección</label>{{ form_cfg.direccion }}</p>
+    <p><label>Serial impresora fiscal (número de control)</label>{{ form_cfg.serial_impresora_fiscal }}</p>
+    <p><label>Notas al pie de la factura</label>{{ form_cfg.notas_factura }}</p>
+    <p><label>Logo (opcional)</label>{{ form_cfg.logo }}</p>
+
+    <button type="submit" class="btn btn-verde">Finalizar instalación</button>
+  </form>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:760px">
+  <h1>Datos del negocio</h1>
+  <p class="subtitulo">Estos datos aparecen en cada factura emitida.</p>
+  <form method="post" enctype="multipart/form-data" data-guardar>
+    {% csrf_token %}
+    <div class="form-fila">
+      <p><label>Nombre</label>{{ form.nombre }}</p>
+      <p><label>Teléfono</label>{{ form.telefono }}</p>
+    </div>
+    <div class="form-fila">
+      <p><label>RIF</label>{{ form.rif }}</p>
+      <p><label>NIT</label>{{ form.nit }}</p>
+    </div>
+    <p><label>Dirección</label>{{ form.direccion }}</p>
+    <p><label>Serial impresora fiscal (control)</label>{{ form.serial_impresora_fiscal }}</p>
+    <p><label>Notas al pie de la factura</label>{{ form.notas_factura }}</p>
+    <p><label>Logo</label>{{ form.logo }}</p>
+    <button class="btn btn-verde" type="submit">Guardar (F8)</button>
+    <a class="btn btn-borde" href="{% url 'dashboard' %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

@@ -8,7 +8,8 @@ from django.db.models import Max
 class Venta(models.Model):
     METODOS_PAGO = [
         ("efectivo", "Efectivo"), ("transferencia", "Transferencia"),
-        ("punto_venta", "Punto de venta"), ("credito", "Crédito (fiado)"),
+        ("punto_venta", "Punto de venta"),
+        ("bio_pago", "Bio Pago"), ("credito", "Crédito (fiado)"),
         ("mixto", "Mixto"),
     ]
     ESTADOS = [("completada", "Completada"), ("anulada", "Anulada")]
@@ -61,6 +62,7 @@ class Pago(models.Model):
     METODOS = [
         ("efectivo", "Efectivo"), ("transferencia", "Transferencia"),
         ("punto_venta", "Punto de venta"),
+        ("bio_pago", "Bio Pago"),
     ]
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name="pagos")
     metodo = models.CharField(max_length=15, choices=METODOS)

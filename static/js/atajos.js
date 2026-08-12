@@ -101,3 +101,30 @@ document.addEventListener("DOMContentLoaded", function () {
     // Enter en el monto agrega el pago y el foco regresa al select
   }
 })();
+
+// Foco automático en modales (cliente F10 y pesaje)
+document.addEventListener("DOMContentLoaded", function () {
+  const m = document.querySelector(".modal-caja input[name='cliente_q']") ||
+            document.querySelector(".modal-caja input[type='number']");
+  if (m) m.focus();
+});
+
+// Esc en cobro: volver al ticket sin mouse (aunque el foco esté en select/input)
+document.addEventListener("keydown", function (e) {
+  if (e.key !== "Escape") return;
+  if (document.querySelector(".modal-fondo")) return;
+  const volver = document.querySelector("input[name='accion'][value='volver']");
+  if (volver) {
+    e.preventDefault();
+    volver.closest("form").submit();
+  }
+});
+
+// Ctrl+Z: vaciar ticket sin mouse (con confirmación)
+document.addEventListener("keydown", function (e) {
+  if (!(e.ctrlKey && (e.key === "z" || e.key === "Z"))) return;
+  const vaciar = document.querySelector("input[name='accion'][value='vaciar']");
+  if (!vaciar) return;
+  e.preventDefault();
+  vaciar.closest("form").submit();
+});

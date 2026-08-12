@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:620px;margin:30px auto">
+  <h1>Licencia del sistema</h1>
+  {% if lic.activada %}
+    <div class="mensaje {% if lic.esta_vencida %}error{% else %}success{% endif %}">
+      {% if lic.esta_vencida %}
+        ⚠️ <strong>Licencia vencida.</strong> Contacta al proveedor para renovar.
+      {% else %}
+        ✅ <strong>Licencia activa.</strong>
+        {% if lic.dias_licencia == 7 %}Período de prueba: {% endif %}
+        {{ lic.dias_restantes }} días restantes.
+      {% endif %}
+    </div>
+  {% else %}
+    <p class="subtitulo">El sistema no está activado. Elige una opción:</p>
+    <form method="post" style="margin-bottom:14px">
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="prueba">
+      <button class="btn btn-ambar" type="submit" style="width:100%">Activar período de prueba (7 días)</button>
+    </form>
+    <h2>¿Ya tienes clave?</h2>
+    <form method="post" data-guardar>
+      {% csrf_token %}
+      <input type="hidden" name="accion" value="activar">
+      <p><label>Clave de licencia (365 días)</label>
+        <input type="text" name="clave" required placeholder="ABCD-1234-EFGH-5678" style="text-transform:uppercase">
+      </p>
+      <button class="btn btn-verde" type="submit">Activar licencia</button>
+    </form>
+  {% endif %}
+  {% if lic.activada and not lic.esta_vencida %}
+    <a class="btn btn-borde" href="{% url 'dashboard' %}" style="margin-top:14px;display:inline-block">Continuar al sistema</a>
+  {% endif %}
+</div>
+{% endblock %}
