@@ -1,9 +1,10 @@
 import csv
 import io
+import logging
 from decimal import Decimal, InvalidOperation
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.contrib import messages  # ← IMPORTANTE: Agregar esta importación
-from django.shortcuts import redirect  # ← IMPORTANTE: Agregar esta importación
+from django.contrib import messages
+from django.shortcuts import redirect
 from django.urls import reverse_lazy
 from django.views.generic import CreateView, ListView, UpdateView, TemplateView
 
@@ -14,6 +15,26 @@ from django.db.models import Q
 from .forms import ProductoForm
 from .models import Categoria, Producto
 
+# Configurar logger
+logger = logging.getLogger(__name__)
+
+
+DEBUG_LOG = '/tmp/import_debug.log'
+
+def debug_log(msg):
+    """Escribe mensajes de depuración a un archivo"""
+    try:
+        with open(DEBUG_LOG, 'a') as f:
+            from datetime import datetime
+            f.write(f"{datetime.now().strftime('%H:%M:%S')} - {msg}\n")
+            f.flush()  # Forzar escritura inmediata
+    except Exception as e:
+        # Si falla, intentar escribir en otro lugar
+        try:
+            with open('/tmp/debug_fallback.log', 'a') as f:
+                f.write(f"ERROR en debug_log: {e}\n")
+        except:
+            pass
 
 class ProductoListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
     model = Producto
@@ -67,7 +88,7 @@ class ProductoUpdateView(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageM
 
 
 class ProductoImportView(AdminRequiredMixin, TemplateView):
-    """Importa productos masivamente desde CSV (exportable desde Excel)."""
+    """Importa productos masivamente desde CSV."""
     template_name = "productos/importar.html"
 
     def get_context_data(self, **kwargs):
@@ -76,101 +97,147 @@ class ProductoImportView(AdminRequiredMixin, TemplateView):
         return ctx
 
     def post(self, request, *args, **kwargs):
+        debug_log("=" * 60)
+        debug_log("INICIANDO POST DE IMPORTACIÓN")
+        debug_log("=" * 60)
+        
+        debug_log(f"FILES: {request.FILES}")
+        debug_log(f"POST: {request.POST}")
+        
         archivo = request.FILES.get("archivo")
         if not archivo:
+            debug_log("ERROR: No se recibió archivo")
             messages.error(request, "Selecciona un archivo CSV")
             return self.render_to_response(self.get_context_data())
 
-        # Verificar extensión del archivo
+        debug_log(f"Archivo recibido: {archivo.name}")
+        debug_log(f"Tamaño: {archivo.size} bytes")
+        debug_log(f"Tipo: {archivo.content_type}")
+        
         if not archivo.name.endswith('.csv'):
+            debug_log(f"EXTENSIÓN INCORRECTA: {archivo.name}")
             messages.error(request, "El archivo debe tener extensión .csv")
             return self.render_to_response(self.get_context_data())
 
         try:
-            data = archivo.read().decode("utf-8-sig")
-        except UnicodeDecodeError:
-            messages.error(request, "El archivo debe estar en formato CSV (UTF-8)")
-            return self.render_to_response(self.get_context_data())
+            contenido = archivo.read()
+            debug_log(f"Contenido leído: {len(contenido)} bytes")
+            
+            try:
+                texto = contenido.decode('utf-8-sig')
+                debug_log("DECODIFICACIÓN OK")
+                debug_log(f"Primeros 300 caracteres:")
+                debug_log(texto[:300])
 
-        creados = actualizados = errores = 0
-        lineas_procesadas = 0
-        
-        try:
-            reader = csv.DictReader(io.StringIO(data))
-            
-            # Verificar que el CSV tiene las columnas necesarias
-            expected_headers = ['nombre', 'codigo_barras', 'categoria', 'unidad', 
-                              'precio_venta', 'precio_compra', 'stock', 'stock_minimo', 'grava_iva']
-            
-            if reader.fieldnames:
-                # Mostrar columnas encontradas para depuración
-                print(f"Columnas encontradas: {reader.fieldnames}")
-            
-            for i, row in enumerate(reader, start=2):
-                lineas_procesadas += 1
-                try:
-                    nombre = (row.get("nombre") or "").strip()
-                    codigo = (row.get("codigo_barras") or "").strip()
-                    
-                    if not nombre:
-                        errores += 1
-                        continue
-                    
-                    # Obtener o crear categoría
-                    categoria_nombre = (row.get("categoria") or "General").strip() or "General"
-                    cat, _ = Categoria.objects.get_or_create(nombre=categoria_nombre)
-                    
-                    # Función para convertir a Decimal de forma segura
-                    def dec(v, d="0"):
-                        if not v or str(v).strip() == "":
-                            return Decimal(d)
-                        try:
-                            # Reemplazar coma por punto para decimales
-                            valor = str(v).replace(",", ".").strip()
-                            return Decimal(valor)
-                        except (InvalidOperation, ValueError):
-                            return Decimal(d)
-                    
-                    # Determinar si grava IVA
-                    grava_iva_val = (row.get("grava_iva") or "").strip().lower()
-                    grava_iva = grava_iva_val in ("si", "sí", "1", "true", "yes", "y")
-                    
-                    # Crear o actualizar producto
-                    prod, creado = Producto.objects.update_or_create(
-                        codigo_barras=codigo if codigo else None,
-                        defaults={
-                            'nombre': nombre,
-                            'categoria': cat,
-                            'unidad': (row.get("unidad") or "unidad").strip(),
-                            'precio_venta': dec(row.get("precio_venta"), "0"),
-                            'precio_compra': dec(row.get("precio_compra"), "0"),
-                            'stock': dec(row.get("stock"), "0"),
-                            'stock_minimo': dec(row.get("stock_minimo"), "0"),
-                            'grava_iva': grava_iva,
-                        }
-                    )
-                    
-                    if creado:
-                        creados += 1
-                    else:
-                        actualizados += 1
+                # ============================================
+                # LIMPIAR COMILLAS DOBLES DEL CSV
+                # ============================================
+                # Dividir en líneas y limpiar cada una
+                lineas_originales = texto.splitlines()
+                debug_log(f"Número de líneas originales: {len(lineas_originales)}")
+
+                lineas_limpias = []
+                for linea in lineas_originales:
+                    linea = linea.strip()
+                    # Si la línea tiene comillas al inicio y final, quitarlas
+                    if linea.startswith('"') and linea.endswith('"'):
+                        linea = linea[1:-1]  # Quita la primera y última comilla
+                    lineas_limpias.append(linea)
+
+                # Unir las líneas limpias
+                texto_limpio = '\n'.join(lineas_limpias)
+                debug_log(f"Número de líneas después de limpiar: {len(lineas_limpias)}")
+                if lineas_limpias:
+                    debug_log(f"Cabecera limpia: {lineas_limpias[0]}")
+                    if len(lineas_limpias) > 1:
+                        debug_log(f"Primer producto limpio: {lineas_limpias[1]}")
+                # ============================================
+
+                # Usar texto_limpio en lugar de texto
+                csv_data = io.StringIO(texto_limpio)
+                reader = csv.DictReader(csv_data)
+                
+                debug_log(f"Columnas encontradas: {reader.fieldnames}")
+                
+                creados = 0
+                actualizados = 0
+                errores = 0
+                
+                for row_num, row in enumerate(reader, start=2):
+                    try:
+                        nombre = row.get('nombre', '').strip()
+                        if not nombre:
+                            debug_log(f"Fila {row_num}: Nombre vacío")
+                            errores += 1
+                            continue
                         
-                except Exception as e:
-                    errores += 1
-                    # Log del error para depuración
-                    print(f"Error en línea {i}: {e}")
-                    continue
-
-        except csv.Error as e:
-            messages.error(request, f"Error al leer el archivo CSV: {e}")
-            return self.render_to_response(self.get_context_data())
-        
-        # Mensaje de éxito con detalles
-        mensaje = f"Importación completada: {creados} creados, {actualizados} actualizados"
-        if errores > 0:
-            mensaje += f", {errores} con error"
-            messages.warning(request, mensaje)
-        else:
-            messages.success(request, mensaje)
+                        # Obtener categoría
+                        categoria_nombre = row.get('categoria', 'General').strip() or 'General'
+                        categoria, _ = Categoria.objects.get_or_create(nombre=categoria_nombre)
+                        
+                        # Convertir a Decimal
+                        def to_decimal(valor, default=0):
+                            if not valor or str(valor).strip() == '':
+                                return Decimal(str(default))
+                            try:
+                                valor_str = str(valor).replace(',', '.').strip()
+                                return Decimal(valor_str)
+                            except:
+                                return Decimal(str(default))
+                        
+                        codigo = row.get('codigo_barras', '').strip()
+                        codigo = codigo if codigo else None
+                        
+                        grava_iva = row.get('grava_iva', '').strip().lower() in ('si', 'sí', '1', 'true')
+                        
+                        producto, creado = Producto.objects.update_or_create(
+                            codigo_barras=codigo,
+                            defaults={
+                                'nombre': nombre,
+                                'categoria': categoria,
+                                'unidad': row.get('unidad', 'unidad').strip() or 'unidad',
+                                'precio_venta': to_decimal(row.get('precio_venta', 0)),
+                                'precio_compra': to_decimal(row.get('precio_compra', 0)),
+                                'stock': to_decimal(row.get('stock', 0)),
+                                'stock_minimo': to_decimal(row.get('stock_minimo', 0)),
+                                'grava_iva': grava_iva,
+                            }
+                        )
+                        
+                        if creado:
+                            creados += 1
+                        else:
+                            actualizados += 1
+                            
+                        if row_num % 10 == 0:
+                            debug_log(f"Procesados {row_num-1} registros...")
+                            
+                    except Exception as e:
+                        errores += 1
+                        debug_log(f"ERROR en línea {row_num}: {e}")
+                        debug_log(f"Row: {row}")
+                        continue
+                
+                debug_log("=" * 60)
+                debug_log(f"RESUMEN: {creados} creados, {actualizados} actualizados, {errores} errores")
+                debug_log("=" * 60)
+                
+                mensaje = f"Importación completada: {creados} creados, {actualizados} actualizados"
+                if errores > 0:
+                    mensaje += f", {errores} con error"
+                    messages.warning(request, mensaje)
+                else:
+                    messages.success(request, mensaje)
+                
+            except UnicodeDecodeError as e:
+                debug_log(f"ERROR DE DECODIFICACIÓN: {e}")
+                messages.error(request, "El archivo debe estar en formato UTF-8")
+                return self.render_to_response(self.get_context_data())
             
+        except Exception as e:
+            debug_log(f"ERROR GENERAL: {e}")
+            import traceback
+            debug_log(traceback.format_exc())
+            messages.error(request, f"Error al procesar el archivo: {str(e)}")
+        
         return redirect("productos:list")

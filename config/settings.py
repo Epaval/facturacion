@@ -107,3 +107,31 @@ LOGOUT_REDIRECT_URL = 'accounts:login'
 
 AXES_FAILURE_LIMIT = 5
 AXES_COOLOFF_TIME = 1
+
+
+# En config/settings.py, agregar al final:
+
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': 'debug_import.log',
+        },
+    },
+    'root': {
+        'handlers': ['console', 'file'],
+        'level': 'INFO',
+    },
+    'loggers': {
+        'productos.views': {
+            'handlers': ['console', 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
