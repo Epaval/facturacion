@@ -10,7 +10,7 @@ Compression=lzma2/max
 SolidCompression=yes
 PrivilegesRequired=lowest
 WizardStyle=modern
-SetupIconFile=icons\icono.ico
+SetupIconFile=..\icons\icono.ico
 
 [Languages]
 Name: "spanish"; MessagesFile: "compiler:Languages\Spanish.isl"
