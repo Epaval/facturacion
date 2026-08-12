@@ -3,7 +3,12 @@
 <div class="panel">
   <div class="panel-cabecera">
     <h1>Productos</h1>
-    <a class="btn btn-azul" href="{% url 'productos:create' %}">+ Registrar producto (F5)</a>
+    <div class="d-flex gap-2">
+      <a class="btn btn-verde" href="{% url 'productos:importar' %}">
+        📥 Importar CSV
+      </a>
+      <a class="btn btn-azul" href="{% url 'productos:create' %}">+ Registrar producto (F5)</a>
+    </div>
   </div>
   <form method="get" class="form-fila" style="margin-bottom:12px">
     <input type="text" name="q" value="{{ q }}" placeholder="Nombre o código de barras (F2)" autofocus>
@@ -38,4 +43,28 @@
   </p>
   {% endif %}
 </div>
+
+<style>
+.d-flex {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+.gap-2 {
+  gap: 8px;
+}
+.btn-verde {
+  background: #28a745;
+  color: white;
+  border: none;
+  padding: 6px 14px;
+  border-radius: 4px;
+  text-decoration: none;
+  font-size: 14px;
+}
+.btn-verde:hover {
+  background: #218838;
+  color: white;
+}
+</style>
 {% endblock %}

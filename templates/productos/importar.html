@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">Importar Productos</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        
+                        <div class="mb-3">
+                            <label for="archivo" class="form-label">Archivo CSV</label>
+                            <input type="file" class="form-control" id="archivo" name="archivo" accept=".csv" required>
+                            <small class="form-text text-muted">
+                                El archivo debe tener las siguientes columnas:
+                                <ul class="mt-2">
+                                    <li><strong>nombre</strong> - Nombre del producto (requerido)</li>
+                                    <li><strong>codigo_barras</strong> - Código de barras (opcional)</li>
+                                    <li><strong>categoria</strong> - Categoría (opcional, por defecto "General")</li>
+                                    <li><strong>unidad</strong> - Unidad de medida (opcional, por defecto "unidad")</li>
+                                    <li><strong>precio_venta</strong> - Precio de venta (opcional)</li>
+                                    <li><strong>precio_compra</strong> - Precio de compra (opcional)</li>
+                                    <li><strong>stock</strong> - Stock actual (opcional)</li>
+                                    <li><strong>stock_minimo</strong> - Stock mínimo (opcional)</li>
+                                    <li><strong>grava_iva</strong> - Grava IVA (si/sí/1/true para sí)</li>
+                                </ul>
+                            </small>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <a href="#" class="btn btn-secondary" onclick="descargarTemplate()">
+                                📥 Descargar plantilla
+                            </a>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-success">
+                                📤 Importar productos
+                            </button>
+                            <a href="{% url 'productos:list' %}" class="btn btn-secondary">
+                                Cancelar
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            
+            <div class="card mt-3">
+                <div class="card-body">
+                    <h5>Instrucciones:</h5>
+                    <ol>
+                        <li>Prepara tu archivo CSV con las columnas mencionadas</li>
+                        <li>Guarda el archivo en formato UTF-8</li>
+                        <li>Selecciona el archivo y haz clic en "Importar"</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function descargarTemplate() {
+    // Crear el contenido del CSV con encabezados
+    const headers = ['nombre', 'codigo_barras', 'categoria', 'unidad', 
+                    'precio_venta', 'precio_compra', 'stock', 'stock_minimo', 'grava_iva'];
+    const sample = ['Producto Ejemplo', '123456789', 'Electrónica', 'unidad', 
+                    '100.00', '80.00', '10', '5', 'si'];
+    
+    let csvContent = headers.join(',') + '\n';
+    csvContent += sample.join(',') + '\n';
+    
+    // Crear y descargar el archivo
+    const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    link.href = URL.createObjectURL(blob);
+    link.download = 'plantilla_productos.csv';
+    link.click();
+}
+</script>
+{% endblock %}
