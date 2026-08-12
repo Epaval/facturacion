@@ -4,7 +4,7 @@ import os
 block_cipher = None
 
 a = Analysis(
-    ['desktop.py'],
+    ['desktop_wrapper.py'],
     pathex=[],
     binaries=[],
     datas=[
@@ -36,9 +36,6 @@ a = Analysis(
         'whitenoise',
         'whitenoise.middleware',
         'whitenoise.storage',
-        'crispy_forms',
-        'crispy_bootstrap5',
-        'crispy_bootstrap5.templatetags',
         'waitress',
         'PIL',
         'PIL.Image',
