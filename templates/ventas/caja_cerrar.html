@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Cierre de caja</h1>
+<p class="subtitulo">Cuenta el efectivo físico en gaveta y compáralo con el esperado.</p>
+
+<div class="pos-grid">
+  <div class="panel">
+    <h2>Resumen de la caja #{{ caja.id }}</h2>
+    <div class="ticket-linea"><span>Efectivo inicial</span><strong>Bs {{ caja.monto_inicial }}</strong></div>
+    <div class="ticket-linea"><span>Ventas</span><strong>{{ n_ventas }} · Bs {{ total_vendido }}</strong></div>
+    <div class="ticket-linea"><span>Efectivo recibido</span><strong>Bs {{ efectivo }}</strong></div>
+    <div class="ticket-linea"><span>Vuelto entregado</span><strong style="color:var(--rojo)">Bs {{ cambio }}</strong></div>
+    <div class="ticket-linea"><span>Esperado en gaveta</span><strong style="color:var(--azul)">Bs {{ esperado }}</strong></div>
+  </div>
+  <div class="panel">
+    <h2>Conteo físico</h2>
+    <form method="post" data-guardar>
+      {% csrf_token %}
+      <p><label>Efectivo contado (Bs)</label>
+        <input type="number" name="monto_contado" step="0.01" min="0" placeholder="0.00" autofocus required>
+      </p>
+      <button class="btn btn-rojo" type="submit">Confirmar cierre (F8)</button>
+      <a class="btn btn-borde" href="{% url 'ventas:caja' %}">Cancelar</a>
+    </form>
+    <p class="subtitulo" style="margin-top:10px">Contado &lt; esperado = FALTANTE · Contado &gt; esperado = SOBRANTE</p>
+  </div>
+</div>
+{% endblock %}

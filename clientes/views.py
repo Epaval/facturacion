@@ -1,4 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+
+from core.mixins import AdminRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -43,7 +45,7 @@ class ClienteCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return ctx
 
 
-class ClienteUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+class ClienteUpdateView(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Cliente
     form_class = ClienteForm
     template_name = "clientes/cliente_form.html"

@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel">
+  <div class="panel-cabecera"><h1>Historial de cajas</h1></div>
+  <table>
+    <thead><tr><th>Caja</th><th>Usuario</th><th>Apertura</th><th>Cierre</th><th>Esperado</th><th>Contado</th><th>Diferencia</th></tr></thead>
+    <tbody>
+    {% for c in object_list %}
+      <tr>
+        <td>#{{ c.id }}</td>
+        <td>{{ c.usuario.full_name }}</td>
+        <td>{{ c.fecha_apertura|date:"d/m/Y H:i" }}</td>
+        <td>{{ c.fecha_cierre|date:"d/m/Y H:i" }}</td>
+        <td>{% if c.esperado is not None %}Bs {{ c.esperado }}{% else %}—{% endif %}</td>
+        <td>{% if c.monto_contado is not None %}Bs {{ c.monto_contado }}{% else %}—{% endif %}</td>
+        <td>
+          {% if c.diferencia is None %}<span class="badge badge-azul">Abierta</span>
+          {% elif c.diferencia == 0 %}<span class="badge badge-verde">Cuadrada</span>
+          {% elif c.diferencia > 0 %}<span class="badge badge-ambar">Sobrante Bs {{ c.diferencia }}</span>
+          {% else %}<span class="badge badge-rojo">Faltante Bs {{ c.diferencia }}</span>{% endif %}
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">Sin cajas registradas.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

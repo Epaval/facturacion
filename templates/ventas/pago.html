@@ -13,18 +13,42 @@
     {% endfor %}
 
     <p style="margin-top:14px"><label>Cliente (obligatorio)</label></p>
-    <form method="post">
-      {% csrf_token %}
-      <input type="hidden" name="accion" value="cliente">
-      <select name="cliente" onchange="this.form.submit()">
-        <option value="">— Selecciona cliente —</option>
-        {% for c in clientes %}
-        <option value="{{ c.pk }}" {% if cliente and cliente.pk == c.pk %}selected{% endif %}>{{ c.full_name }} · {{ c.ci_nit|default:"s/doc" }}</option>
-        {% endfor %}
-      </select>
-    </form>
-    {% if not cliente %}
-      <p class="subtitulo" style="margin-top:6px">Debes seleccionar un cliente. Registra uno nuevo con F4.</p>
+    {% if cliente %}
+      <div class="cliente-card">
+        <div>
+          <strong>{{ cliente.full_name }}</strong><br>
+          <span class="subtitulo">{{ cliente.ci_nit|default:"sin documento" }} · {{ cliente.telefono|default:"sin teléfono" }}</span>
+        </div>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="cliente">
+          <input type="hidden" name="cliente" value="">
+          <button class="btn btn-borde btn-chico" type="submit">Cambiar</button>
+        </form>
+      </div>
+    {% else %}
+      <form method="get">
+        <input type="text" name="q_cliente" value="{{ q_cliente }}"
+               placeholder="CI, RIF (V/G/J-…) o nombre">
+      </form>
+      {% if resultados_clientes is not None %}
+        <div style="margin-top:8px">
+          {% for c in resultados_clientes %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="cliente">
+            <input type="hidden" name="cliente" value="{{ c.pk }}">
+            <button class="btn-fila" type="submit">
+              {{ c.full_name }} · {{ c.ci_nit|default:"s/doc" }} · {{ c.telefono|default:"" }}
+            </button>
+          </form>
+          {% empty %}
+            <p class="subtitulo">Sin resultados. Registra uno nuevo con F4.</p>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="subtitulo" style="margin-top:6px">Escribe el CI (ej: 12345678), RIF (ej: V12345678) o nombre.</p>
+      {% endif %}
     {% endif %}
 
     <h2 style="margin-top:16px">Pagos</h2>

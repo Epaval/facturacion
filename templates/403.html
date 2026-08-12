@@ -1,0 +1,9 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:560px;margin:40px auto;text-align:center">
+  <h1 style="font-size:3rem;color:var(--rojo)">403</h1>
+  <h2>Acceso restringido</h2>
+  <p class="subtitulo">Tu rol no tiene permiso para esta sección.<br>Solicita acceso al administrador.</p>
+  <a class="btn btn-azul" href="{% url 'dashboard' %}">Volver al panel</a>
+</div>
+{% endblock %}

@@ -1,3 +1,5 @@
+from decimal import Decimal
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Max
@@ -46,7 +48,7 @@ class DetalleVenta(models.Model):
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 
     def save(self, *args, **kwargs):
-        self.subtotal = self.cantidad * self.precio_unitario
+        self.subtotal = (self.cantidad * self.precio_unitario).quantize(Decimal("0.01"))
         super().save(*args, **kwargs)
 
     def __str__(self):
@@ -64,3 +66,21 @@ class Pago(models.Model):
 
     def __str__(self):
         return f"{self.get_metodo_display()} Bs {self.monto}"
+
+class Caja(models.Model):
+    ESTADOS = [("abierta", "Abierta"), ("cerrada", "Cerrada")]
+
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="cajas")
+    fecha_apertura = models.DateTimeField(auto_now_add=True)
+    fecha_cierre = models.DateTimeField(null=True, blank=True)
+    monto_inicial = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    monto_contado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    esperado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    diferencia = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    estado = models.CharField(max_length=10, choices=ESTADOS, default="abierta")
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        return f"Caja {self.id} · {self.usuario} · {self.get_estado_display()}"

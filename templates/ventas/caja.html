@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Caja</h1>
+
+{% if not caja %}
+  <div class="panel" style="max-width:520px">
+    <h2>Apertura de caja</h2>
+    <p class="subtitulo">Indica el efectivo inicial (monto de arranque) para comenzar a vender.</p>
+    <form method="post" data-guardar>
+      {% csrf_token %}
+      <p><label>Efectivo inicial (Bs)</label>
+        <input type="number" name="monto_inicial" step="0.01" min="0" value="0" autofocus required>
+      </p>
+      <button class="btn btn-verde" type="submit">Abrir caja (F8)</button>
+    </form>
+  </div>
+{% else %}
+  <div class="pos-grid">
+    <div class="panel">
+      <h2>Caja #{{ caja.id }} · abierta {{ caja.fecha_apertura|date:"d/m/Y H:i" }}</h2>
+      <div class="ticket-linea"><span>Efectivo inicial</span><strong>Bs {{ caja.monto_inicial }}</strong></div>
+      <div class="ticket-linea"><span>Ventas realizadas</span><strong>{{ n_ventas }}</strong></div>
+      <div class="ticket-linea"><span>Total vendido</span><strong>Bs {{ total_vendido }}</strong></div>
+      <h2 style="margin-top:14px">Pagos recibidos por método</h2>
+      {% for p in por_metodo %}
+        <div class="ticket-linea"><span>{{ p.metodo }}</span><strong>Bs {{ p.s }}</strong></div>
+      {% empty %}
+        <p class="subtitulo">Sin pagos aún.</p>
+      {% endfor %}
+      <div class="ticket-linea"><span>Vuelto entregado</span><strong style="color:var(--rojo)">Bs {{ cambio }}</strong></div>
+    </div>
+    <div class="panel">
+      <h2>Efectivo esperado en gaveta</h2>
+      <div class="ticket-total">Bs {{ esperado }}</div>
+      <p class="subtitulo">= inicial + efectivo recibido − vuelto entregado</p>
+      <a class="btn btn-rojo" style="width:100%" href="{% url 'ventas:caja_cerrar' %}">Cerrar caja y contar efectivo</a>
+      <a class="btn btn-borde" style="width:100%;margin-top:8px" href="{% url 'ventas:caja_list' %}">Historial de cajas</a>
+    </div>
+  </div>
+{% endif %}
+{% endblock %}

@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Facturación{% endblock %}</title>
-<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=4">
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=7">
 </head>
 <body>
 {% if user.is_authenticated %}
@@ -15,8 +15,9 @@
     <nav class="nav-links">
       <a href="{% url 'ventas:pos' %}">Nueva venta</a>
       <a href="{% url 'ventas:list' %}">Ventas</a>
-      <a href="{% url 'productos:list' %}">Productos</a>
+      {% if user.es_admin %}<a href="{% url 'productos:list' %}">Productos</a>{% endif %}
       <a href="{% url 'clientes:list' %}">Clientes</a>
+      <a href="{% url 'ventas:caja' %}">Caja</a>
     </nav>
     <div class="usuario">
       <span>{{ user.full_name }}</span>
@@ -48,6 +49,7 @@
   <span><kbd>F3</kbd>Buscar cliente</span>
   <span><kbd>F4</kbd>Registrar cliente</span>
   <span><kbd>F5</kbd>Registrar producto</span>
+  <span><kbd>F6</kbd>Abrir/Cerrar caja</span>
   <span><kbd>F8</kbd>Guardar</span>
   <span><kbd>F9</kbd>Confirmar cobro</span>
   <span><kbd>F10</kbd>Pasar a pagar</span>
@@ -57,13 +59,14 @@
 <script>
 const RUTAS = {
   pos: "{% url 'ventas:pos' %}",
-  buscar_producto: "{% url 'productos:buscar' %}",
+  caja: "{% url 'ventas:caja' %}",
+  buscar_producto: "{% if user.es_admin %}{% url 'productos:buscar' %}{% endif %}",
   buscar_cliente: "{% url 'clientes:buscar' %}",
   nuevo_cliente: "{% url 'clientes:create' %}",
-  nuevo_producto: "{% url 'productos:create' %}",
+  nuevo_producto: "{% if user.es_admin %}{% url 'productos:create' %}{% endif %}",
 };
 </script>
-<script src="{% static 'js/atajos.js' %}?v=4"></script>
+<script src="{% static 'js/atajos.js' %}?v=7"></script>
 {% endif %}
 </body>
 </html>

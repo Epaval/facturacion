@@ -17,6 +17,10 @@ class Empleado(AbstractUser):
     activo = models.BooleanField(default=True)
 
     @property
+    def es_admin(self):
+        return self.rol == "admin" or self.is_superuser
+
+    @property
     def full_name(self):
         return f"{self.nombres} {self.apellidos}"
 

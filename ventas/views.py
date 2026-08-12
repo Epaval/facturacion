@@ -11,7 +11,7 @@ from django.views.generic import DetailView, ListView
 from clientes.models import Cliente
 from productos.models import Producto
 
-from .models import Pago, Venta
+from .models import Caja, Pago, Venta
 
 
 class POSView(LoginRequiredMixin, View):
@@ -25,7 +25,7 @@ class POSView(LoginRequiredMixin, View):
         for l in lineas:
             if l["producto_id"] == producto.id:
                 l["cantidad"] = str(Decimal(l["cantidad"]) + cantidad)
-                l["subtotal"] = str(Decimal(l["subtotal"]) + cantidad * producto.precio_venta)
+                l["subtotal"] = str((Decimal(l["subtotal"]) + cantidad * producto.precio_venta).quantize(Decimal("0.01")))
                 break
         else:
             lineas.append({
@@ -33,11 +33,14 @@ class POSView(LoginRequiredMixin, View):
                 "nombre": producto.nombre,
                 "cantidad": str(cantidad),
                 "precio": str(producto.precio_venta),
-                "subtotal": str(cantidad * producto.precio_venta),
+                "subtotal": str((cantidad * producto.precio_venta).quantize(Decimal("0.01"))),
             })
         return None
 
     def get(self, request):
+        if not Caja.objects.filter(usuario=request.user, estado="abierta").exists():
+            messages.error(request, "Debes abrir caja antes de vender (F6)")
+            return redirect("ventas:caja")
         lineas = request.session.get("pos_lineas", [])
         q = request.GET.get("q", "").strip()
         productos = None
@@ -48,7 +51,7 @@ class POSView(LoginRequiredMixin, View):
             producto = Producto.objects.filter(activo=True, pk=agregar_id).first()
             if producto:
                 if producto.es_pesable:
-                    total = sum(Decimal(l["subtotal"]) for l in lineas)
+                    total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
                     return render(request, "ventas/pos.html", {
                         "lineas": lineas, "productos": None, "q": "",
                         "total": total, "modal_producto": producto,
@@ -71,7 +74,7 @@ class POSView(LoginRequiredMixin, View):
                 if unicos.count() == 1:
                     exacto = unicos.first()
             if exacto and exacto.es_pesable:
-                total = sum(Decimal(l["subtotal"]) for l in lineas)
+                total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
                 return render(request, "ventas/pos.html", {
                     "lineas": lineas,
                     "productos": None,
@@ -92,7 +95,7 @@ class POSView(LoginRequiredMixin, View):
                 Q(nombre__icontains=q) | Q(codigo_barras__icontains=q)
             )[:12]
 
-        total = sum(Decimal(l["subtotal"]) for l in lineas)
+        total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
         return render(request, "ventas/pos.html", {
             "lineas": lineas,
             "productos": productos,
@@ -144,16 +147,27 @@ class PagoView(LoginRequiredMixin, View):
     def _totales(self, request):
         lineas = request.session.get("pos_lineas", [])
         pagos = request.session.get("pos_pagos", [])
-        total = sum(Decimal(l["subtotal"]) for l in lineas)
-        pagado = sum(Decimal(p["monto"]) for p in pagos)
+        total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
+        pagado = sum((Decimal(p["monto"]) for p in pagos), Decimal("0.00")).quantize(Decimal("0.01"))
         return lineas, pagos, total, pagado
 
     def get(self, request):
         lineas, pagos, total, pagado = self._totales(request)
         if not lineas:
             return redirect("ventas:pos")
+        if not Caja.objects.filter(usuario=request.user, estado="abierta").exists():
+            messages.error(request, "Debes abrir caja antes de cobrar")
+            return redirect("ventas:caja")
         cliente_id = request.session.get("pos_cliente")
         cliente = Cliente.objects.filter(pk=cliente_id).first() if cliente_id else None
+        q_cliente = request.GET.get("q_cliente", "").strip()
+        resultados_clientes = None
+        if q_cliente:
+            resultados_clientes = Cliente.objects.filter(
+                Q(ci_nit__icontains=q_cliente)
+                | Q(nombres__icontains=q_cliente)
+                | Q(apellidos__icontains=q_cliente)
+            )[:8]
         etiquetas = dict(Pago.METODOS)
         pagos_vista = [dict(p, metodo_label=etiquetas.get(p["metodo"], p["metodo"])) for p in pagos]
         return render(request, "ventas/pago.html", {
@@ -162,7 +176,8 @@ class PagoView(LoginRequiredMixin, View):
             "falta": max(total - pagado, Decimal("0")),
             "cambio": max(pagado - total, Decimal("0")),
             "cliente": cliente,
-            "clientes": Cliente.objects.all(),
+            "q_cliente": q_cliente,
+            "resultados_clientes": resultados_clientes,
             "completo": pagado >= total,
             "title": "Cobro de venta",
         })
@@ -253,6 +268,8 @@ class VentaListView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         qs = super().get_queryset().select_related("cliente", "usuario")
+        if not self.request.user.es_admin:
+            qs = qs.filter(usuario=self.request.user)
         q = self.request.GET.get("q", "").strip()
         if q:
             qs = qs.filter(Q(numero__icontains=q) | Q(cliente__nombres__icontains=q))

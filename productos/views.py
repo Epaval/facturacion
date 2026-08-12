@@ -1,4 +1,6 @@
 from django.contrib.auth.mixins import LoginRequiredMixin
+
+from core.mixins import AdminRequiredMixin
 from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 from django.urls import reverse_lazy
@@ -8,7 +10,7 @@ from .forms import ProductoForm
 from .models import Categoria, Producto
 
 
-class ProductoListView(LoginRequiredMixin, ListView):
+class ProductoListView(LoginRequiredMixin, AdminRequiredMixin, ListView):
     model = Producto
     template_name = "productos/producto_list.html"
     context_object_name = "object_list"
@@ -33,7 +35,7 @@ class ProductoListView(LoginRequiredMixin, ListView):
         return ctx
 
 
-class ProductoCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
+class ProductoCreateView(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, CreateView):
     model = Producto
     form_class = ProductoForm
     template_name = "productos/producto_form.html"
@@ -46,7 +48,7 @@ class ProductoCreateView(LoginRequiredMixin, SuccessMessageMixin, CreateView):
         return ctx
 
 
-class ProductoUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
+class ProductoUpdateView(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageMixin, UpdateView):
     model = Producto
     form_class = ProductoForm
     template_name = "productos/producto_form.html"
