@@ -18,6 +18,7 @@
       {% if user.es_admin %}<a href="{% url 'productos:list' %}">Productos</a>{% endif %}
       <a href="{% url 'clientes:list' %}">Clientes</a>
       <a href="{% url 'ventas:caja' %}">Caja</a>
+      <a href="{% url 'ventas:caja_list' %}">Historial cajas</a>
     </nav>
     <div class="usuario">
       <span>{{ user.full_name }}</span>

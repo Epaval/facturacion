@@ -78,6 +78,19 @@ class Caja(models.Model):
     esperado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     diferencia = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     estado = models.CharField(max_length=10, choices=ESTADOS, default="abierta")
+    regularizada = models.BooleanField(default=False)
+    destino_diferencia = models.CharField(max_length=15, null=True, blank=True, choices=[
+        ("cajero", "Asumida por el cajero"),
+        ("cliente", "Devuelta al cliente"),
+        ("ingreso", "Ingreso extraordinario"),
+    ])
+    regularizada_por = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True,
+                                 on_delete=models.SET_NULL, related_name="cajas_regularizadas")
+    fecha_regularizacion = models.DateTimeField(null=True, blank=True)
+    nota_regularizacion = models.TextField(blank=True)
+    cliente_reclamo = models.ForeignKey("clientes.Cliente", null=True, blank=True,
+                                on_delete=models.SET_NULL, related_name="reclamos_caja")
+    historial_regularizacion = models.TextField(blank=True)
 
     class Meta:
         ordering = ["-id"]

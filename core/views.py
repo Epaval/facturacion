@@ -1,3 +1,4 @@
+from decimal import Decimal
 from datetime import date
 
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -19,7 +20,7 @@ class DashboardView(LoginRequiredMixin, TemplateView):
         if not self.request.user.es_admin:
             ventas_hoy = ventas_hoy.filter(usuario=self.request.user)
         ctx["ventas_hoy"] = ventas_hoy.count()
-        ctx["total_hoy"] = ventas_hoy.aggregate(t=Sum("total"))["t"] or 0
+        ctx["total_hoy"] = (ventas_hoy.aggregate(t=Sum("total"))["t"] or Decimal("0")).quantize(Decimal("0.01"))
         ctx["stock_bajo"] = Producto.objects.filter(activo=True, stock__lte=F("stock_minimo")).count()
         ctx["total_productos"] = Producto.objects.filter(activo=True).count()
         ctx["total_clientes"] = Cliente.objects.count()

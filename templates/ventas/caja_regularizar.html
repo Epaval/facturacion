@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:640px">
+  <h1>Regularizar caja #{{ caja.id }}</h1>
+  <p class="subtitulo">{{ caja.usuario.full_name }} · cierre {{ caja.fecha_cierre|date:"d/m/Y H:i" }}</p>
+  {% if caja.regularizada %}
+  <p class="mensaje info" style="margin-bottom:12px">
+    Ya regularizada como <strong>{{ caja.get_destino_diferencia_display }}</strong>.
+    Puedes corregir el destino (por ejemplo, un reclamo posterior de un cliente).
+  </p>
+  {% endif %}
+
+  <div class="ticket-linea"><span>Esperado en gaveta</span><strong>Bs {{ caja.esperado }}</strong></div>
+  <div class="ticket-linea"><span>Contado físico</span><strong>Bs {{ caja.monto_contado }}</strong></div>
+  {% if caja.diferencia < 0 %}
+    <div class="ticket-linea"><span>Diferencia</span><strong style="color:var(--rojo)">FALTANTE Bs {{ caja.diferencia }}</strong></div>
+    <p class="subtitulo" style="margin-top:10px">Política: el faltante lo asume el cajero responsable.</p>
+  {% else %}
+    <div class="ticket-linea"><span>Diferencia</span><strong style="color:var(--ambar)">SOBRANTE Bs {{ caja.diferencia }}</strong></div>
+    <p class="subtitulo" style="margin-top:10px">Política: el sobrante queda pendiente hasta el reclamo del cliente
+    que pagó de más. Regulariza como ingreso solo si pasó el plazo de reclamo.</p>
+  {% endif %}
+
+  {% if caja.diferencia > 0 %}
+  <div style="margin-top:14px">
+    <label>Cliente al que se devuelve el sobrante</label>
+    {% if seleccionado %}
+      <div class="cliente-card">
+        <div>
+          <strong>{{ seleccionado.full_name }}</strong><br>
+          <span class="subtitulo">{{ seleccionado.ci_nit|default:"s/doc" }} · {{ seleccionado.telefono|default:"" }}</span>
+        </div>
+        <a class="btn btn-borde btn-chico" href="?">Cambiar</a>
+      </div>
+    {% else %}
+      <form method="get">
+        <input type="text" name="q_cliente" value="{{ q_cliente }}" placeholder="CI, RIF (V/G/J) o nombre">
+      </form>
+      <div style="margin-top:8px">
+      {% if resultados is not None %}
+        {% for c in resultados %}
+          <a class="btn-fila" href="?q_cliente={{ q_cliente }}&sel={{ c.pk }}">
+            {{ c.full_name }} · {{ c.ci_nit|default:"s/doc" }}
+          </a>
+        {% empty %}
+          <p class="subtitulo">Sin resultados.</p>
+        {% endfor %}
+      {% else %}
+        <p class="subtitulo">Busca y selecciona el cliente. Obligatorio si eliges "Devuelta al cliente".</p>
+      {% endif %}
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <form method="post" data-guardar style="margin-top:14px">
+    {% csrf_token %}
+    {% if seleccionado %}
+      <input type="hidden" name="cliente_reclamo" value="{{ seleccionado.pk }}">
+    {% endif %}
+    <p><label>Destino de la diferencia</label>
+      <select name="destino">
+        {% if caja.diferencia < 0 %}
+          <option value="cajero">Asumida por el cajero (descuento)</option>
+        {% else %}
+          <option value="cliente">Devuelta al cliente que reclamó</option>
+          <option value="ingreso">Ingreso extraordinario (sin reclamo)</option>
+        {% endif %}
+      </select>
+    </p>
+    <p><label>Nota (opcional)</label>
+      <textarea name="nota" rows="3" placeholder="Detalle de la regularización"></textarea>
+    </p>
+    <button class="btn btn-verde" type="submit">Regularizar (F8)</button>
+    <a class="btn btn-borde" href="{% url 'ventas:caja_list' %}">Cancelar</a>
+  </form>
+</div>
+{% endblock %}

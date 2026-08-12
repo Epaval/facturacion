@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Caja #{{ caja.id }} · {{ caja.usuario.full_name }}</h1>
+<p class="subtitulo">Apertura {{ caja.fecha_apertura|date:"d/m/Y H:i" }} ·
+  Cierre {{ caja.fecha_cierre|date:"d/m/Y H:i" }} · {{ caja.get_estado_display }}</p>
+
+<div class="pos-grid">
+  <div class="panel">
+    <h2>Resumen</h2>
+    <div class="ticket-linea"><span>Efectivo inicial</span><strong>Bs {{ caja.monto_inicial }}</strong></div>
+    <div class="ticket-linea"><span>Ventas</span><strong>{{ n_ventas }} · Bs {{ total_vendido }}</strong></div>
+    <div class="ticket-linea"><span>Efectivo recibido</span><strong>Bs {{ efectivo }}</strong></div>
+    <div class="ticket-linea"><span>Vuelto entregado</span><strong>Bs {{ cambio }}</strong></div>
+    <div class="ticket-linea"><span>Esperado en gaveta</span><strong>Bs {{ esperado }}</strong></div>
+    {% if caja.monto_contado is not None %}
+      <div class="ticket-linea"><span>Contado físico</span><strong>Bs {{ caja.monto_contado }}</strong></div>
+      <div class="ticket-linea"><span>Diferencia</span>
+        <strong style="color:{% if caja.diferencia < 0 %}var(--rojo){% elif caja.diferencia > 0 %}var(--ambar){% else %}var(--verde){% endif %}">
+          {% if caja.diferencia == 0 %}Cuadrada{% elif caja.diferencia > 0 %}Sobrante Bs {{ caja.diferencia }}{% else %}Faltante Bs {{ caja.diferencia }}{% endif %}
+        </strong>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="panel">
+    <h2>Regularización</h2>
+    {% if caja.regularizada %}
+      <div class="ticket-linea"><span>Destino</span><strong>{{ caja.get_destino_diferencia_display }}</strong></div>
+      {% if caja.cliente_reclamo %}
+        <div class="ticket-linea"><span>Cliente reembolsado</span>
+          <strong>{{ caja.cliente_reclamo.full_name }} · {{ caja.cliente_reclamo.ci_nit|default:"s/doc" }}</strong></div>
+      {% endif %}
+      <div class="ticket-linea"><span>Regularizó</span><strong>{{ caja.regularizada_por.full_name }}</strong></div>
+      <div class="ticket-linea"><span>Fecha</span><strong>{{ caja.fecha_regularizacion|date:"d/m/Y H:i" }}</strong></div>
+      {% if caja.nota_regularizacion %}<p class="subtitulo" style="margin-top:8px">Nota: {{ caja.nota_regularizacion }}</p>{% endif %}
+      {% if caja.historial_regularizacion %}
+        <h2 style="margin-top:12px">Historial de regularización</h2>
+        <pre class="historial-reg">{{ caja.historial_regularizacion }}</pre>
+      {% endif %}
+      {% if user.es_admin %}
+        <a class="btn btn-borde" style="margin-top:12px" href="{% url 'ventas:caja_regularizar' caja.pk %}">Corregir regularización</a>
+      {% endif %}
+    {% elif caja.diferencia %}
+      <p class="subtitulo">Diferencia pendiente de regularizar.</p>
+      {% if user.es_admin %}
+        <a class="btn btn-verde" href="{% url 'ventas:caja_regularizar' caja.pk %}">Regularizar</a>
+      {% endif %}
+    {% else %}
+      <p class="subtitulo">Caja cuadrada, sin diferencia.</p>
+    {% endif %}
+  </div>
+</div>
+
+<div class="panel" style="margin-top:16px">
+  <h2>Ventas de esta caja (para cruzar reclamos)</h2>
+  <p class="subtitulo">Cruza el monto y la fecha del reclamo con estas ventas para identificar al cliente cobrado de más.</p>
+  <table>
+    <thead><tr><th>Venta</th><th>Fecha</th><th>Cliente</th><th>Total</th><th>Pagos</th><th>Vuelto</th></tr></thead>
+    <tbody>
+    {% for v in ventas_caja %}
+      <tr>
+        <td><a href="{% url 'ventas:detail' v.pk %}">#{{ v.numero }}</a></td>
+        <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+        <td>{{ v.cliente|default:"Consumidor final" }}</td>
+        <td><strong>Bs {{ v.total }}</strong></td>
+        <td>{% for p in v.pagos.all %}{{ p.get_metodo_display }} Bs {{ p.monto }}{% if not forloop.last %} + {% endif %}{% empty %}—{% endfor %}</td>
+        <td>{% if v.cambio %}Bs {{ v.cambio }}{% else %}—{% endif %}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">Sin ventas en esta caja.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

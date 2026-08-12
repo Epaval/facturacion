@@ -7,7 +7,7 @@
     <tbody>
     {% for c in object_list %}
       <tr>
-        <td>#{{ c.id }}</td>
+        <td><a href="{% url 'ventas:caja_detail' c.pk %}">#{{ c.id }}</a></td>
         <td>{{ c.usuario.full_name }}</td>
         <td>{{ c.fecha_apertura|date:"d/m/Y H:i" }}</td>
         <td>{{ c.fecha_cierre|date:"d/m/Y H:i" }}</td>
@@ -16,8 +16,12 @@
         <td>
           {% if c.diferencia is None %}<span class="badge badge-azul">Abierta</span>
           {% elif c.diferencia == 0 %}<span class="badge badge-verde">Cuadrada</span>
+          {% elif c.regularizada %}<span class="badge badge-verde">Regularizada: {{ c.get_destino_diferencia_display }}</span>
           {% elif c.diferencia > 0 %}<span class="badge badge-ambar">Sobrante Bs {{ c.diferencia }}</span>
           {% else %}<span class="badge badge-rojo">Faltante Bs {{ c.diferencia }}</span>{% endif %}
+          {% if user.es_admin and c.estado == "cerrada" and c.diferencia and not c.regularizada %}
+            <br><a class="btn btn-borde btn-chico" style="margin-top:6px" href="{% url 'ventas:caja_regularizar' c.pk %}">Regularizar</a>
+          {% endif %}
         </td>
       </tr>
     {% empty %}
