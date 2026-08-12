@@ -33,7 +33,8 @@ def main():
     if getattr(sys, "frozen", False):
         os.chdir(Path(sys.executable).resolve().parent)
 
-    call_command("migrate", interactive=False)
+    # Pasar stdout/stderr explícitos para evitar NoneType error en modo frozen
+    call_command("migrate", interactive=False, stdout=sys.stdout, stderr=sys.stderr)
 
     if not sin_ventana:
         print("=" * 58)
