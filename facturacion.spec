@@ -1,61 +1,52 @@
 # -*- mode: python ; coding: utf-8 -*-
-import os
+from PyInstaller.utils.hooks import collect_submodules, collect_data_files
 
-block_cipher = None
+hiddenimports = (
+    ['environ', 'django_environ', 'environ.environ']
+    + collect_submodules('django')
+    + collect_submodules('axes')
+    + collect_submodules('simple_history')
+    + collect_submodules('whitenoise')
+    + collect_submodules('waitress')
+    + [
+        'django.contrib.auth.backends.ModelBackend',
+        'django.contrib.auth.hashers.Argon2PasswordHasher',
+        'django.contrib.auth.hashers.PBKDF2PasswordHasher',
+        'django.core.cache.backends.locmem.LocMemCache',
+        'django.template.context_processors.debug',
+        'django.template.context_processors.request',
+        'django.template.context_processors.auth',
+        'django.template.context_processors.messages',
+        'PIL', 'PIL.Image',
+    ]
+)
+
+datas = [
+    ('templates', 'templates'),
+    ('static', 'static'),
+    ('accounts', 'accounts'),
+    ('clientes', 'clientes'),
+    ('productos', 'productos'),
+    ('ventas', 'ventas'),
+    ('core', 'core'),
+    ('config', 'config'),
+    ('icons', 'icons'),
+]
 
 a = Analysis(
-    ['desktop_wrapper.py'],
-    pathex=[],
+    ['desktop/launcher.py'],
+    pathex=['.'],
     binaries=[],
-    datas=[
-        ('templates', 'templates'),
-        ('static', 'static'),
-        ('accounts', 'accounts'),
-        ('clientes', 'clientes'),
-        ('productos', 'productos'),
-        ('ventas', 'ventas'),
-        ('core', 'core'),
-        ('config', 'config'),
-    ],
-    hiddenimports=[
-        'django.contrib.admin',
-        'django.contrib.auth',
-        'django.contrib.contenttypes',
-        'django.contrib.sessions',
-        'django.contrib.messages',
-        'django.contrib.staticfiles',
-        'django.contrib.humanize',
-        'django.templatetags.static',
-        'django.middleware.security',
-        'django.middleware.csrf',
-        'django.middleware.clickjacking',
-        'django.middleware.common',
-        'axes',
-        'axes.handlers',
-        'axes.handlers.database',
-        'whitenoise',
-        'whitenoise.middleware',
-        'whitenoise.storage',
-        'waitress',
-        'PIL',
-        'PIL.Image',
-        'decimal',
-        'json',
-        'uuid',
-        'hashlib',
-        'platform',
-    ],
+    datas=datas,
+    hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=['matplotlib', 'numpy', 'scipy', 'pandas', 'pytest', 'test'],
-    win_no_prefer_redirects=False,
-    win_private_assemblies=False,
-    cipher=block_cipher,
+    excludes=['matplotlib', 'numpy', 'scipy', 'pandas', 'pytest'],
     noarchive=False,
 )
 
-pyz = PYZ(a.pure, a.zipped_data, cipher=block_cipher)
+pyz = PYZ(a.pure)
 
 exe = EXE(
     pyz,
@@ -67,22 +58,17 @@ exe = EXE(
     bootloader_ignore_signals=False,
     strip=False,
     upx=True,
-    console=True,
+    console=False,
+    icon='icons/icono.ico' if __import__('os').path.exists('icons/icono.ico') else None,
     disable_windowed_traceback=False,
     argv_emulation=False,
-    target_arch=None,
-    codesign_identity=None,
-    entitlements_file=None,
-    icon='icon.ico' if os.path.exists('icon.ico') else None,
 )
 
 coll = COLLECT(
     exe,
     a.binaries,
-    a.zipfiles,
     a.datas,
     strip=False,
     upx=True,
-    upx_exclude=[],
     name='Facturacion',
 )
