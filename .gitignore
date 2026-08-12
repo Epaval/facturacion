@@ -46,3 +46,9 @@ Thumbs.db
 # PyInstaller
 *.manifest
 *.spec.bak
+
+# PyInstaller build artifacts
+build/
+dist/
+*.manifest
+*.spec.bak

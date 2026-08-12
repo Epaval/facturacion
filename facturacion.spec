@@ -1,4 +1,6 @@
 # -*- mode: python ; coding: utf-8 -*-
+import os
+
 block_cipher = None
 
 a = Analysis(
@@ -22,17 +24,24 @@ a = Analysis(
         'django.contrib.sessions',
         'django.contrib.messages',
         'django.contrib.staticfiles',
-        'django_extensions',
+        'django.contrib.humanize',
         'axes',
-        'crispy_forms',
-        'crispy_bootstrap5',
-        'whitenoise',
+        'axes.handlers',
+        'axes.handlers.database',
         'waitress',
+        'PIL',
+        'PIL.Image',
+        'sqlalchemy',
+        'decimal',
+        'json',
+        'uuid',
+        'hashlib',
+        'platform',
     ],
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=['matplotlib', 'numpy', 'scipy', 'pandas', 'pytest', 'test'],
     win_no_prefer_redirects=False,
     win_private_assemblies=False,
     cipher=block_cipher,
