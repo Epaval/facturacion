@@ -27,6 +27,14 @@ jobs:
         pip install -r requirements.txt
         pip install pyinstaller
     
+
+    - name: Inject license secret
+      shell: pwsh
+      run: |
+        $secret = "${{ secrets.LICENSE_SECRET }}"
+        if (-not $secret) { $secret = "dev-secret-cambiar-en-produccion" }
+        Set-Content -Path "core\licencia_secret.py" -Value "LICENSE_SECRET = `"$secret`""
+
     - name: Build executable with PyInstaller
       run: pyinstaller facturacion.spec --clean --noconfirm
     

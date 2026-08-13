@@ -52,4 +52,4 @@ build/
 dist/
 *.manifest
 *.spec.bak
-notas.md
+notas.mdcore/licencia_secret.py

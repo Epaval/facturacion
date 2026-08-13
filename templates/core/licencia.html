@@ -31,12 +31,22 @@
       {% endif %}
     </div>
   {% else %}
-    <p class="subtitulo">El sistema no está activado. Elige una opción:</p>
+    <p class="subtitulo">El sistema no está activado. Elige una opción:<br>
+<small>Huella de esta máquina: <strong>{{ huella }}</strong> (envíala para recibir tu clave de licencia)</small></p>
     <form method="post" style="margin-bottom:14px">
       {% csrf_token %}
       <input type="hidden" name="accion" value="prueba">
       <button class="btn btn-ambar" type="submit" style="width:100%">Activar período de prueba (7 días)</button>
     </form>
+    {% if messages %}
+    <div style="margin-bottom:14px">
+      {% for m in messages %}
+      <div style="padding:10px 14px;border-radius:8px;margin-bottom:8px;{% if m.tags == 'error' %}background:#fee2e2;color:#991b1b;border:1px solid #fca5a5{% elif m.tags == 'success' %}background:#dcfce7;color:#166534;border:1px solid #86efac{% else %}background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc{% endif %}">
+        {{ m }}
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
     <h2>¿Ya tienes clave?</h2>
     <form method="post" data-guardar>
       {% csrf_token %}

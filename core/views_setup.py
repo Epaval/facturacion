@@ -1,5 +1,6 @@
 from django.views.generic import TemplateView
 from .models import ImpresoraFiscal
+from .licencia_keys import huella_maquina, validar_clave
 from django.shortcuts import get_object_or_404
 from django.db.models import ProtectedError
 from django.views import View
@@ -71,15 +72,18 @@ def licencia_view(request):
         accion = request.POST.get("accion")
         if accion == "activar":
             clave = request.POST.get("clave", "").strip().upper()
-            if not re.fullmatch(r"[A-Z0-9\-]{10,30}", clave):
-                messages.error(request, "Clave inválida. Debe ser alfanumérica.")
+            resultado = validar_clave(clave)
+            if not resultado:
+                messages.error(request, "Clave inválida o no corresponde a esta máquina.")
             else:
+                dias, _h = resultado
                 lic.clave = clave
                 lic.activada = True
                 from django.utils import timezone
                 lic.fecha_activacion = timezone.now()
+                lic.dias_licencia = dias
                 lic.save()
-                messages.success(request, f"Licencia activada: 365 días desde hoy.")
+                messages.success(request, f"Licencia activada: {dias} días desde hoy.")
                 return redirect("dashboard")
         elif accion == "prueba":
             lic.activada = True
@@ -90,7 +94,7 @@ def licencia_view(request):
             messages.success(request, "Período de prueba activado: 7 días.")
             return redirect("dashboard")
 
-    return render(request, "core/licencia.html", {
+    return render(request, "core/licencia.html", {"huella": huella_maquina(),
         "lic": lic,
         "title": "Licencia del sistema",
     })
