@@ -12,7 +12,7 @@
       <h2 style="margin:0">FACTURA</h2>
       <p style="margin:4px 0"><strong>N°:</strong> {{ venta.numero|stringformat:"06d" }}</p>
       <p style="margin:0"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
-      {% if config.serial_impresora_fiscal %}
+      {% if venta.serial_fiscal or config.serial_impresora_fiscal %}
       <p style="margin:0"><strong>Serial fiscal (control):</strong><br>{{ venta.serial_fiscal|default:config.serial_impresora_fiscal }}</p>
       {% endif %}
     </div>
@@ -30,7 +30,7 @@
     {% for d in venta.detalles.all %}
       <tr>
         <td>{{ d.producto.nombre }}{% if d.producto.grava_iva %} <small>(G)</small>{% endif %}</td>
-        <td>{{ d.cantidad }} {{ d.producto.unidad }}</td>
+        <td>{% if d.producto.por_peso %}{{ d.cantidad|floatformat:3 }}{% else %}{{ d.cantidad|floatformat:2 }}{% endif %} {{ d.producto.unidad }}</td>
         <td>Bs {{ d.precio_unitario }}</td>
         <td>Bs {{ d.subtotal }}</td>
       </tr>

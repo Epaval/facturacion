@@ -5,9 +5,9 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Facturación{% endblock %}</title>
-<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=16">
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=17">
 </head>
-<body>
+<body{% if user.is_authenticated %} class="con-barra"{% endif %}>
 {% if user.is_authenticated %}
 <header class="topbar">
   <div class="topbar-int">
@@ -70,7 +70,7 @@ const RUTAS = {
   nuevo_producto: "{% if user.es_admin %}{% url 'productos:create' %}{% endif %}",
 };
 </script>
-<script src="{% static 'js/atajos.js' %}?v=16"></script>
+<script src="{% static 'js/atajos.js' %}?v=17"></script>
 {% endif %}
 </body>
 </html>

@@ -75,6 +75,8 @@ class POSView(LoginRequiredMixin, View):
                 "nombre": producto.nombre,
                 "cantidad": str(cantidad),
                 "precio": str(producto.precio_venta),
+                "por_peso": producto.por_peso,
+                "unidad": producto.unidad,
                 "subtotal": str((cantidad * producto.precio_venta).quantize(Decimal("0.01"))),
             })
         return None

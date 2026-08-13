@@ -48,7 +48,7 @@ class Venta(models.Model):
 class DetalleVenta(models.Model):
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name="detalles")
     producto = models.ForeignKey("productos.Producto", on_delete=models.PROTECT, related_name="detalles")
-    cantidad = models.DecimalField(max_digits=12, decimal_places=2, default=1)
+    cantidad = models.DecimalField(max_digits=12, decimal_places=3, default=1)
     precio_unitario = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
 

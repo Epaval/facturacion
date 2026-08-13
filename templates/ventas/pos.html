@@ -61,7 +61,7 @@
     <div class="ticket-lista">
       {% for l in lineas %}
         <div class="ticket-linea">
-          <span>{{ l.nombre }} × {{ l.cantidad }}</span>
+          <span>{{ l.nombre }} × {% if l.por_peso %}{{ l.cantidad|floatformat:3 }}{% else %}{{ l.cantidad }}{% endif %}</span>
           <span class="ticket-derecha">
             <strong>Bs {{ l.subtotal }}</strong>
             <form method="post" class="form-inline">
