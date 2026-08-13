@@ -9,6 +9,15 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def main():
+    import io
+    # En modo frozen sin consola, stdout/stderr pueden ser None
+    if sys.stdout is None:
+        sys.stdout = io.StringIO()
+    if sys.stderr is None:
+        sys.stderr = io.StringIO()
+    if sys.stdin is None:
+        sys.stdin = io.StringIO()
+
     args = sys.argv[1:]
     sin_ventana = "--sin-ventana" in args
     lan = "--lan" in args
@@ -67,7 +76,10 @@ def main():
         print("\nServidor detenido por el usuario.")
     finally:
         if not sin_ventana:
-            input("\nPresiona Enter para cerrar esta ventana...")
+            try:
+                input("\nPresiona Enter para cerrar esta ventana...")
+            except Exception:
+                pass
 
 
 if __name__ == "__main__":
