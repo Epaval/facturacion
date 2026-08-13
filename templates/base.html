@@ -5,7 +5,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Facturación{% endblock %}</title>
-<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=17">
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=18">
 </head>
 <body{% if user.is_authenticated %} class="con-barra"{% endif %}>
 {% if user.is_authenticated %}
@@ -33,6 +33,11 @@
   </div>
 </header>
 {% endif %}
+
+<div id="overlay-accion" hidden>
+  <div class="spinner-accion"></div>
+  <p id="overlay-texto">Procesando…</p>
+</div>
 
 <main class="contenido">
   {% if messages %}
@@ -70,7 +75,7 @@ const RUTAS = {
   nuevo_producto: "{% if user.es_admin %}{% url 'productos:create' %}{% endif %}",
 };
 </script>
-<script src="{% static 'js/atajos.js' %}?v=17"></script>
+<script src="{% static 'js/atajos.js' %}?v=18"></script>
 {% endif %}
 </body>
 </html>

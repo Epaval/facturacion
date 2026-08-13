@@ -14,6 +14,30 @@ function aviso(msg) {
 
 const RESTRINGIDO = "Acceso restringido: solo administradores";
 
+var SPIN_GUARDAR_MS = 3000; // sensación de guardado (ajustable)
+
+window.mostrarOverlay = function (texto) {
+  var ov = document.getElementById("overlay-accion");
+  if (!ov) return;
+  document.getElementById("overlay-texto").textContent = texto;
+  ov.hidden = false;
+};
+window.ocultarOverlay = function () {
+  var ov = document.getElementById("overlay-accion");
+  if (ov) ov.hidden = true;
+};
+
+// Spinner al confirmar venta (F9 o botón)
+document.addEventListener("submit", function (e) {
+  var f = e.target;
+  if (f.hasAttribute && f.hasAttribute("data-confirmar") && !f.dataset.spinDone) {
+    e.preventDefault();
+    f.dataset.spinDone = "1";
+    mostrarOverlay("Guardando factura…");
+    setTimeout(function () { f.submit(); }, SPIN_GUARDAR_MS);
+  }
+});
+
 document.addEventListener("keydown", function (e) {
   switch (e.key) {
     case "F1": e.preventDefault(); window.location.href = RUTAS.pos; break;

@@ -59,7 +59,7 @@
 </div>
 
 <div style="margin-top:14px;display:flex;gap:8px">
-  <a class="btn btn-azul" href="javascript:window.print()">Imprimir (F8)</a>
+  <button class="btn btn-azul" type="button" onclick="imprimirConSpinner()">Imprimir (F8)</button>
   <a class="btn btn-borde" href="{% url 'ventas:list' %}">Volver al historial</a>
 </div>
 
@@ -78,4 +78,16 @@
 .ticket-notas { padding: 10px 0; font-style: italic; text-align: center; border-top: 1px dashed #aaa; }
 .ticket-footer { padding-top: 10px; text-align: center; font-size: .9rem; color: #666; }
 </style>
+<script>
+function imprimirConSpinner() {
+  if (window.mostrarOverlay) mostrarOverlay("Imprimiendo factura…");
+  setTimeout(function () {
+    window.print();
+    if (window.ocultarOverlay) ocultarOverlay();
+  }, 900);
+}
+document.addEventListener("keydown", function (e) {
+  if (e.key === "F8") { e.preventDefault(); e.stopImmediatePropagation(); imprimirConSpinner(); }
+}, true);
+</script>
 {% endblock %}

@@ -211,3 +211,13 @@ tbody td { font-size: 1.1rem; padding: 13px 16px; }
   .ticket-printable { position: absolute; left: 0; top: 0; width: 100%; }
   .no-print { display: none !important; }
 }
+
+/* ===== Overlay de acción (guardando / imprimiendo) ===== */
+#overlay-accion { position: fixed; inset: 0; background: rgba(15,23,42,.55); z-index: 200;
+  display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; }
+#overlay-accion[hidden] { display: none; }
+#overlay-accion p { color: #fff; font-size: 1.15rem; font-weight: 700; margin: 0; }
+.spinner-accion { width: 52px; height: 52px; border: 6px solid rgba(255,255,255,.35);
+  border-top-color: #fff; border-radius: 50%; animation: girar .8s linear infinite; }
+@keyframes girar { to { transform: rotate(360deg); } }
+@media print { #overlay-accion { display: none !important; } }
