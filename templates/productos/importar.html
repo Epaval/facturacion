@@ -27,6 +27,7 @@
                                     <li><strong>stock</strong> - Stock actual (opcional)</li>
                                     <li><strong>stock_minimo</strong> - Stock mínimo (opcional)</li>
                                     <li><strong>grava_iva</strong> - Grava IVA (si/sí/1/true para sí)</li>
+                                    <li><strong>por_peso</strong> - Se vende por peso/granel (si/sí/1/true). Solo estos abren el modal de cantidad en el POS</li>
                                 </ul>
                             </small>
                         </div>
@@ -67,7 +68,7 @@
 function descargarTemplate() {
     // Crear el contenido del CSV con encabezados
     const headers = ['nombre', 'codigo_barras', 'categoria', 'unidad', 
-                    'precio_venta', 'precio_compra', 'stock', 'stock_minimo', 'grava_iva'];
+                    'precio_venta', 'precio_compra', 'stock', 'stock_minimo', 'grava_iva', 'por_peso'];
     const sample = ['Producto Ejemplo', '123456789', 'Electrónica', 'unidad', 
                     '100.00', '80.00', '10', '5', 'si'];
     

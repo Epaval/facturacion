@@ -1,11 +1,11 @@
 [Setup]
-AppName=APP_FACTURACIÓN
-AppVersion=0.0.19
-AppPublisher=FACDIN_SOFTWARE
+AppName=APP-FACTURACIÓN
+AppVersion=0.0.20
+AppPublisher=FACDIN/SOFTWARE
 DefaultDirName={autopf}\Facturacion
 DefaultGroupName=Facturación
 OutputDir=.
-OutputBaseFilename=Facturacion-Setup-0.0.19
+OutputBaseFilename=Facturacion-Setup-0.0.20
 Compression=lzma2/max
 SolidCompression=yes
 PrivilegesRequired=lowest

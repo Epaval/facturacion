@@ -111,7 +111,7 @@ class POSView(LoginRequiredMixin, View):
         if agregar_id:
             producto = Producto.objects.filter(activo=True, pk=agregar_id).first()
             if producto:
-                if producto.es_pesable:
+                if producto.por_peso:
                     total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
                     return render(request, "ventas/pos.html", {
                         "lineas": lineas, "productos": None, "q": "",
@@ -134,7 +134,7 @@ class POSView(LoginRequiredMixin, View):
                 unicos = Producto.objects.filter(activo=True, codigo_barras__icontains=q)
                 if unicos.count() == 1:
                     exacto = unicos.first()
-            if exacto and exacto.es_pesable:
+            if exacto and exacto.por_peso:
                 total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
                 return render(request, "ventas/pos.html", {
                     "lineas": lineas,

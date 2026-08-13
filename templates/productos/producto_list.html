@@ -23,7 +23,7 @@
     <tbody>
     {% for p in object_list %}
       <tr>
-        <td>{{ p.nombre }} {% if p.grava_iva %}<span class="badge badge-azul">IVA</span>{% endif %}</td>
+        <td>{{ p.nombre }} {% if p.grava_iva %}<span class="badge badge-azul">IVA</span>{% endif %} {% if p.por_peso %}<span class="badge badge-rojo">PESO</span>{% endif %}</td>
         <td>{{ p.codigo_barras|default:"—" }}</td>
         <td>{{ p.categoria.nombre }}</td>
         <td>Bs {{ p.precio_venta }}</td>

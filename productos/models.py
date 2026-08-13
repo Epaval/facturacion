@@ -15,7 +15,7 @@ class Producto(models.Model):
     UNIDADES = [
         ("unidad", "Unidad"), ("kg", "Kilogramo"), ("g", "Gramo"),
         ("lb", "Libra"), ("l", "Litro"), ("ml", "Mililitro"),
-        ("docena", "Docena"), ("paquete", "Paquete"),
+        ("docena", "Docena"), ("paquete", "Paquete"), ("m", "Metro"),
     ]
 
     nombre = models.CharField(max_length=120)
@@ -26,6 +26,7 @@ class Producto(models.Model):
     stock = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     stock_minimo = models.DecimalField(max_digits=12, decimal_places=2, default=0)
     unidad = models.CharField(max_length=10, choices=UNIDADES, default="unidad")
+    por_peso = models.BooleanField(default=False, verbose_name="Se vende por peso (granel)")
     activo = models.BooleanField(default=True)
     grava_iva = models.BooleanField("Paga IVA (16%)", default=False)
     fecha_creacion = models.DateTimeField(auto_now_add=True)
