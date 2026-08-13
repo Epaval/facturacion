@@ -8,6 +8,11 @@
     <p class="subtitulo">Indica el efectivo inicial (monto de arranque) para comenzar a vender.</p>
     <form method="post" data-guardar>
       {% csrf_token %}
+      <label>Impresora fiscal *</label>
+      <select name="impresora" required style="padding:10px;border-radius:8px;border:1px solid #cbd5e1;width:100%;margin-bottom:12px">
+        <option value="">-- Selecciona una impresora --</option>
+        {% for imp in impresoras %}<option value="{{ imp.pk }}">{{ imp.nombre }} — {{ imp.serial }}</option>{% endfor %}
+      </select>
       <p><label>Efectivo inicial (Bs)</label>
         <input type="number" name="monto_inicial" step="0.01" min="0" value="0" autofocus required>
       </p>

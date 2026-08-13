@@ -1,4 +1,4 @@
-from .views_setup import setup_view, licencia_view, config_negocio_view
+from .views_setup import setup_view, licencia_view, config_negocio_view, RespaldoView, ImpresoraView
 from decimal import Decimal
 from datetime import date
 

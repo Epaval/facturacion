@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="panel" style="max-width:900px">
+  <h1>Impresoras fiscales</h1>
+  <p class="subtitulo">Registra las impresoras del negocio. Cada caja debe seleccionar una al abrir (obligatorio).</p>
+
+  <table>
+    <thead><tr><th>Nombre</th><th>Serial</th><th>Activa</th><th style="width:180px"></th></tr></thead>
+    <tbody>
+      {% for imp in impresoras %}
+      <tr>
+        <form method="post">
+          {% csrf_token %}
+          <input type="hidden" name="pk" value="{{ imp.pk }}">
+          <td><input type="text" name="nombre" value="{{ imp.nombre }}" style="width:100%"></td>
+          <td><input type="text" name="serial" value="{{ imp.serial }}" style="width:100%"></td>
+          <td style="text-align:center"><input type="checkbox" name="activa" {% if imp.activa %}checked{% endif %}></td>
+          <td>
+            <button class="btn btn-azul" type="submit">Guardar</button>
+            <button class="btn btn-borde" type="submit" name="accion" value="eliminar" onclick="return confirm('¿Eliminar esta impresora?')">Eliminar</button>
+          </td>
+        </form>
+      </tr>
+      {% empty %}
+      <tr><td colspan="4">No hay impresoras registradas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2 style="margin-top:22px">Registrar nueva impresora</h2>
+  <form method="post" style="display:flex;gap:10px;flex-wrap:wrap">
+    {% csrf_token %}
+    <input type="text" name="nombre" placeholder="Ej: Caja 1 principal" required style="flex:1;min-width:200px">
+    <input type="text" name="serial" placeholder="Ej: XFD123-12" required style="flex:1;min-width:160px">
+    <button class="btn btn-verde" type="submit">Registrar</button>
+  </form>
+</div>
+{% endblock %}

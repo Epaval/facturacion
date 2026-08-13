@@ -1,3 +1,10 @@
+from django.views.generic import TemplateView
+from .models import ImpresoraFiscal
+from django.shortcuts import get_object_or_404
+from django.db.models import ProtectedError
+from django.views import View
+from django.http import HttpResponse
+from core.mixins import AdminRequiredMixin
 import re
 
 from django.contrib import messages
@@ -106,3 +113,74 @@ def config_negocio_view(request):
     return render(request, "core/config_negocio.html", {
         "form": form, "title": "Datos del negocio",
     })
+
+
+class RespaldoView(AdminRequiredMixin, View):
+    """Descarga una copia consistente de la BD SQLite (solo admin)."""
+
+    def get(self, request):
+        import sqlite3
+        import tempfile
+        import os
+        from datetime import datetime
+        from django.db import connection
+
+        connection.ensure_connection()
+        tmp = tempfile.NamedTemporaryFile(suffix=".sqlite3", delete=False)
+        tmp.close()
+        dst = sqlite3.connect(tmp.name)
+        connection.connection.backup(dst)
+        dst.close()
+        with open(tmp.name, "rb") as f:
+            data = f.read()
+        os.unlink(tmp.name)
+
+        nombre = "respaldo_facturacion_{}.sqlite3".format(
+            datetime.now().strftime("%Y%m%d_%H%M%S"))
+        resp = HttpResponse(data, content_type="application/octet-stream")
+        resp["Content-Disposition"] = 'attachment; filename="{}"'.format(nombre)
+        return resp
+
+
+class ImpresoraView(AdminRequiredMixin, TemplateView):
+    """Gestión de impresoras fiscales desde el panel (solo admin)."""
+    template_name = "core/impresoras.html"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["impresoras"] = ImpresoraFiscal.objects.all()
+        ctx["title"] = "Impresoras fiscales"
+        return ctx
+
+    def post(self, request, *args, **kwargs):
+        from .models import ImpresoraFiscal as Imp
+        pk = request.POST.get("pk")
+        nombre = (request.POST.get("nombre") or "").strip()
+        serial = (request.POST.get("serial") or "").strip()
+        activa = request.POST.get("activa") in ("on", "1")
+
+        if request.POST.get("accion") == "eliminar":
+            imp = get_object_or_404(Imp, pk=pk)
+            try:
+                imp.delete()
+                messages.success(request, f"Impresora {imp.nombre} eliminada")
+            except ProtectedError:
+                messages.error(request, "No se puede eliminar: tiene cajas asociadas. Desactívala.")
+        elif pk:
+            imp = get_object_or_404(Imp, pk=pk)
+            if nombre:
+                imp.nombre = nombre
+            if serial:
+                imp.serial = serial
+            imp.activa = activa
+            imp.save()
+            messages.success(request, f"Impresora {imp.nombre} actualizada")
+        else:
+            if not nombre or not serial:
+                messages.error(request, "Nombre y serial son obligatorios")
+            elif Imp.objects.filter(serial=serial).exists():
+                messages.error(request, "Ya existe una impresora con ese serial")
+            else:
+                Imp.objects.create(nombre=nombre, serial=serial, activa=True)
+                messages.success(request, f"Impresora {nombre} registrada")
+        return redirect("impresoras")

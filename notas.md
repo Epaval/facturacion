@@ -1,11 +1,15 @@
 source .venv/bin/activate
-python3 manage.py runserver 8020
 
-python3 -m py_compile ventas/views.py && echo "SINTAXIS OK"
 
-git add desktop/launcher.py
-git commit -m "Add button de import data CSV"
+cd ~/facturacion
+git add -A
+git commit -m "v0.0.21: impresoras fiscales por caja (registro en panel admin, seleccion obligatoria al abrir caja, serial guardado por venta), modo red LAN servidor/estacion/individual, respaldo de BD solo admin, importacion CSV, por_peso para granel"
 git push origin main
 
-git tag v0.0.15
-git push origin v0.0.15
+git tag v0.0.21
+git push origin v0.0.21
+
+
+cd ~/facturacion
+pkill -f desktop.py
+python3 desktop.py

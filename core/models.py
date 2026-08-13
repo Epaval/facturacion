@@ -64,3 +64,16 @@ class ConfigNegocio(models.Model):
     def get(cls):
         obj, _ = cls.objects.get_or_create(pk=1)
         return obj
+
+
+class ImpresoraFiscal(models.Model):
+    """Impresoras fiscales del negocio. El admin las registra una vez."""
+    nombre = models.CharField(max_length=60, help_text="Ej: Caja 1 principal, Respaldo")
+    serial = models.CharField(max_length=40, unique=True)
+    activa = models.BooleanField(default=True)
+
+    class Meta:
+        ordering = ["nombre"]
+
+    def __str__(self):
+        return f"{self.nombre} ({self.serial})"

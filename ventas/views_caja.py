@@ -11,6 +11,7 @@ from django.views.generic import ListView
 
 from clientes.models import Cliente
 from .models import Caja, Pago, Venta
+from core.models import ImpresoraFiscal
 
 
 def resumen_caja(caja):
@@ -45,7 +46,8 @@ class CajaView(LoginRequiredMixin, View):
 
     def get(self, request):
         caja = Caja.objects.filter(usuario=request.user, estado="abierta").first()
-        ctx = {"caja": caja, "title": "Caja"}
+        ctx = {"caja": caja, "title": "Caja",
+            "impresoras": ImpresoraFiscal.objects.filter(activa=True)}
         if caja:
             ctx.update(resumen_caja(caja))
         return render(request, "ventas/caja.html", ctx)
@@ -54,11 +56,26 @@ class CajaView(LoginRequiredMixin, View):
         if Caja.objects.filter(usuario=request.user, estado="abierta").exists():
             messages.info(request, "Ya tienes una caja abierta")
             return redirect("ventas:caja")
+        impresora_id = request.POST.get("impresora")
+        impresora = ImpresoraFiscal.objects.filter(pk=impresora_id, activa=True).first() if impresora_id else None
+        if not impresora:
+            messages.error(request, "Debe seleccionar una impresora fiscal válida para abrir la caja")
+            return redirect("ventas:caja")
+
+        impresora_id = request.POST.get("impresora")
+        if not impresora_id:
+            messages.error(request, "Debe seleccionar una impresora fiscal para abrir la caja")
+            return redirect("ventas:caja")
+        impresora = ImpresoraFiscal.objects.filter(pk=impresora_id, activa=True).first()
+        if not impresora:
+            messages.error(request, "La impresora seleccionada no existe o no está activa")
+            return redirect("ventas:caja")
+
         try:
             inicial = Decimal(request.POST.get("monto_inicial", "0").replace(",", ".") or "0")
         except InvalidOperation:
             inicial = Decimal("0")
-        Caja.objects.create(usuario=request.user, monto_inicial=inicial)
+        Caja.objects.create(usuario=request.user, monto_inicial=inicial, impresora=impresora)
         messages.success(request, "Caja abierta. ¡Buenas ventas!")
         return redirect("ventas:pos")
 

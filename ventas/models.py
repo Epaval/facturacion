@@ -1,3 +1,4 @@
+from core.models import ImpresoraFiscal
 from decimal import Decimal
 
 from django.conf import settings
@@ -17,6 +18,7 @@ class Venta(models.Model):
     numero = models.PositiveIntegerField(unique=True, editable=False)
     cliente = models.ForeignKey("clientes.Cliente", on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name="ventas")
+    serial_fiscal = models.CharField(max_length=40, null=True, blank=True)
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="ventas")
     fecha = models.DateTimeField(auto_now_add=True)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -82,6 +84,8 @@ class Caja(models.Model):
     esperado = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     diferencia = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
     estado = models.CharField(max_length=10, choices=ESTADOS, default="abierta")
+    impresora = models.ForeignKey("core.ImpresoraFiscal", on_delete=models.PROTECT,
+                                   related_name="cajas", null=True, blank=True)
     regularizada = models.BooleanField(default=False)
     destino_diferencia = models.CharField(max_length=15, null=True, blank=True, choices=[
         ("cajero", "Asumida por el cajero"),
