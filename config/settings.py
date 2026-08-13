@@ -35,6 +35,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    *( ['whitenoise.middleware.WhiteNoiseMiddleware'] if os.environ.get('FACTURACION_WEB') else [] ),
     'django.middleware.security.SecurityMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
@@ -75,7 +76,10 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'config.wsgi.application'
 
-DATABASES = {
+if env('DATABASE_URL', default=''):
+    DATABASES = {'default': env.db()}
+else:
+    DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
@@ -93,6 +97,14 @@ LANGUAGE_CODE = 'es-es'
 TIME_ZONE = 'America/Bogota'
 USE_I18N = True
 USE_TZ = True
+
+if env('REDIS_URL', default=''):
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+                          'LOCATION': env('REDIS_URL')}}
+else:
+    CACHES = {'default': {'BACKEND': 'django.core.cache.backends.locmem.LocMemCache'}}
+
+CSRF_TRUSTED_ORIGINS = env.list('CSRF_TRUSTED_ORIGINS', default=['http://127.0.0.1:8021', 'http://localhost:8021'])
 
 STATIC_URL = 'static/'
 STATICFILES_DIRS = [BUNDLE_DIR / 'static']

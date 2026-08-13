@@ -1,0 +1,56 @@
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: facturacion
+      POSTGRES_PASSWORD: facturacion_secret
+      POSTGRES_DB: facturacion
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./docker/pg_hba.conf:/etc/postgresql/pg_hba.conf:ro
+    command: postgres -c hba_file=/etc/postgresql/pg_hba.conf
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U facturacion"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+
+  web:
+    build: .
+    restart: unless-stopped
+    env_file: .env.web
+    environment:
+      DATABASE_URL: postgres://facturacion:facturacion_secret@db:5432/facturacion
+      REDIS_URL: redis://redis:6379/0
+      FACTURACION_WEB: "1"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    volumes:
+      - media:/app/media
+      - data:/app/data
+      - staticfiles:/app/staticfiles
+
+  nginx:
+    image: nginx:alpine
+    restart: unless-stopped
+    ports:
+      - "8021:80"
+    volumes:
+      - ./docker/nginx.conf:/etc/nginx/conf.d/default.conf:ro
+      - media:/app/media:ro
+      - staticfiles:/app/staticfiles:ro
+    depends_on: [web]
+
+volumes:
+  pgdata:
+  media:
+  data:
+  staticfiles:

@@ -1,0 +1,13 @@
+.venv/
+.git/
+.github/
+dist/
+build/
+*.spec
+db.sqlite3
+db.sqlite3-journal
+media/
+staticfiles/
+__pycache__/
+*.pyc
+notas.md

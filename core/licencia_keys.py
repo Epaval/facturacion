@@ -5,6 +5,7 @@ import hashlib
 import hmac
 import os
 import platform
+from pathlib import Path
 import uuid
 
 try:
@@ -14,8 +15,15 @@ except ImportError:
 
 
 def huella_maquina() -> str:
-    """Huella estable de la máquina (MAC + hostname + SO)."""
-    base = f"{uuid.getnode()}|{platform.node()}|{platform.system()}"
+    """Huella estable: MAC+hostname+SO en desktop; id persistido en web/docker."""
+    if os.environ.get("FACTURACION_WEB"):
+        ruta = Path(__file__).resolve().parent.parent / "data" / ".maquina_id"
+        ruta.parent.mkdir(parents=True, exist_ok=True)
+        if not ruta.exists():
+            ruta.write_text(uuid.uuid4().hex[:16].upper())
+        base = ruta.read_text().strip()
+    else:
+        base = f"{uuid.getnode()}|{platform.node()}|{platform.system()}"
     return hashlib.sha256(base.encode()).hexdigest()[:8].upper()
 
 

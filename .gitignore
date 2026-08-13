@@ -53,3 +53,5 @@ dist/
 *.manifest
 *.spec.bak
 notas.mdcore/licencia_secret.py
+.env.web
+.env.web
