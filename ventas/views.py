@@ -1,5 +1,5 @@
 import re
-from decimal import Decimal, InvalidOperation
+from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -13,7 +13,7 @@ from clientes.models import Cliente
 from productos.models import Producto
 
 from .models import Caja, Pago, Venta
-
+ 
 
 def desglose_iva(total, gravado=None):
     """Precios con IVA 16% incluido. gravado = parte del total que paga IVA."""
@@ -36,17 +36,10 @@ def monto_gravado(lineas):
 
 
 def total_items(lineas):
-    """Ítems físicos: unidades suman su cantidad; pesables (kg/g/lb) cuentan 1."""
-    ids = [l["producto_id"] for l in lineas]
-    pesables = set(
-        Producto.objects.filter(pk__in=ids, unidad__in=["kg", "g", "lb"]).values_list("pk", flat=True)
-    )
+    """Ítems físicos: suma de cantidades redondeadas por línea (0,8 → 1)."""
     items = 0
     for l in lineas:
-        if l["producto_id"] in pesables:
-            items += 1
-        else:
-            items += int(Decimal(l["cantidad"]))
+        items += int(Decimal(l["cantidad"]).quantize(Decimal("1"), rounding=ROUND_HALF_UP))
     return items
 
 
@@ -320,7 +313,10 @@ class PagoView(LoginRequiredMixin, View):
 
                 gravado = monto_gravado(lineas)
                 base, iva = desglose_iva(total, gravado)
+                caja = Caja.objects.filter(usuario=request.user, estado="abierta").first()
+                serial = caja.impresora.serial if caja and caja.impresora else None
                 venta = Venta.objects.create(
+                    serial_fiscal=serial,
                     cliente=cliente, usuario=request.user,
                     subtotal=total, descuento=0, total=total,
                     base_imponible=base, monto_iva=iva,
@@ -380,8 +376,8 @@ class VentaDetailView(LoginRequiredMixin, DetailView):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = f"Venta #{self.object.numero}"
         items = 0
-        for d in self.object.detalles.select_related("producto"):
-            items += 1 if d.producto.es_pesable else int(d.cantidad)
+        for d in self.object.detalles.all():
+            items += int(d.cantidad.quantize(Decimal("1"), rounding=ROUND_HALF_UP))
         ctx["total_items"] = items
         from core.models import ConfigNegocio
         ctx["config"] = ConfigNegocio.get()
