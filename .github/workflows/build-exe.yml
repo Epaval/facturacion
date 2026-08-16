@@ -50,13 +50,13 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Facturacion-Installer
-        path: instalador/Facturacion-Setup-*.exe
+        path: instalador/FACDIN-Facturacion-Setup-*.exe
     
     - name: Create release
       uses: softprops/action-gh-release@v2
       if: startsWith(github.ref, 'refs/tags/')
       with:
-        files: instalador/Facturacion-Setup-*.exe
+        files: instalador/FACDIN-Facturacion-Setup-*.exe
         generate_release_notes: true
         draft: false
         prerelease: false
