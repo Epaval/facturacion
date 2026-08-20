@@ -1,0 +1,69 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Libro de ventas</h1>
+<p class="subtitulo">Registro cronológico fiscal de todas las ventas</p>
+
+<form method="get" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+  <select name="mes">
+    <option value="">Todos los meses</option>
+    {% for m, nombre in meses %}
+    <option value="{{ m }}" {% if mes == m|stringformat:"s" %}selected{% endif %}>{{ nombre }}</option>
+    {% endfor %}
+  </select>
+  <select name="anio">
+    <option value="">Todos los años</option>
+    {% for y in anios %}
+    <option value="{{ y }}" {% if anio == y|stringformat:"s" %}selected{% endif %}>{{ y }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-azul" type="submit">Filtrar</button>
+  <a class="btn btn-verde" href="{% url 'ventas:exportar_libro_ventas' %}?mes={{ mes }}&anio={{ anio }}">Exportar CSV</a>
+</form>
+
+<div class="panel" style="display:flex;gap:26px;flex-wrap:wrap;margin-bottom:14px">
+  <div><span class="subtitulo">Total facturado</span><br><strong>Bs {{ total_facturado }}</strong></div>
+  <div><span class="subtitulo">Exento</span><br><strong>Bs {{ total_exento }}</strong></div>
+  <div><span class="subtitulo">Base imponible</span><br><strong>Bs {{ total_base }}</strong></div>
+  <div><span class="subtitulo">IVA 16%</span><br><strong>Bs {{ total_iva }}</strong></div>
+  <div><span class="subtitulo">Notas de crédito</span><br><strong style="color:var(--rojo)">Bs {{ total_nc }}</strong></div>
+  <div><span class="subtitulo">Total neto</span><br><strong style="color:var(--verde)">Bs {{ total_neto }}</strong></div>
+</div>
+
+<table>
+  <thead><tr>
+    <th>N° Control</th><th>N° Factura</th><th>Fecha</th><th>Cliente</th><th>RIF/CI</th>
+    <th>Total</th><th>Exento</th><th>Base imp.</th><th>IVA</th><th>N/C</th><th>Neto</th>
+  </tr></thead>
+  <tbody>
+  {% for lv in libro_ventas %}
+    <tr>
+      <td>{{ lv.numero_control }}</td>
+      <td><a href="{% url 'ventas:detail' lv.venta.pk %}">{{ lv.numero_factura }}</a></td>
+      <td>{{ lv.fecha_factura|date:"d/m/Y" }}</td>
+      <td>{{ lv.cliente_nombre }}</td>
+      <td>{{ lv.cliente_rif|default:"—" }}</td>
+      <td>Bs {{ lv.total_facturado }}</td>
+      <td>Bs {{ lv.exento }}</td>
+      <td>Bs {{ lv.base_imponible_iva }}</td>
+      <td>Bs {{ lv.monto_iva }}</td>
+      <td style="color:var(--rojo)">Bs {{ lv.notas_credito_total }}</td>
+      <td><strong>Bs {{ lv.total_neto }}</strong></td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="11">No hay ventas registradas en el libro.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+{% if is_paginated %}
+<div style="margin-top:12px;display:flex;gap:14px;align-items:center">
+  {% if page_obj.has_previous %}
+  <a href="?page={{ page_obj.previous_page_number }}&mes={{ mes }}&anio={{ anio }}">← Anterior</a>
+  {% endif %}
+  <span>Página {{ page_obj.number }} de {{ page_obj.paginator.num_pages }}</span>
+  {% if page_obj.has_next %}
+  <a href="?page={{ page_obj.next_page_number }}&mes={{ mes }}&anio={{ anio }}">Siguiente →</a>
+  {% endif %}
+</div>
+{% endif %}
+{% endblock %}

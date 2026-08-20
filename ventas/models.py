@@ -134,3 +134,43 @@ class NotaCreditoDetalle(models.Model):
     
     def __str__(self):
         return f"{self.detalle_venta.producto.nombre} x{self.cantidad_devuelta}"
+
+
+class LibroVenta(models.Model):
+    """Registro fiscal de cada venta para el libro de ventas SENIAT."""
+    venta = models.OneToOneField(Venta, on_delete=models.CASCADE, related_name='libro_venta')
+    numero_control = models.CharField("N° de Control", max_length=20, help_text="Número secuencial de control fiscal")
+    numero_factura = models.CharField("N° de Factura", max_length=20)
+    fecha_factura = models.DateField("Fecha factura")
+    
+    # Datos del cliente
+    cliente_nombre = models.CharField(max_length=200)
+    cliente_rif = models.CharField("RIF/CI", max_length=30, blank=True)
+    
+    # Montos
+    total_facturado = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    exento = models.DecimalField("Exento", max_digits=12, decimal_places=2, default=0)
+    base_imponible_iva = models.DecimalField("Base imponible IVA", max_digits=12, decimal_places=2, default=0)
+    monto_iva = models.DecimalField("Monto IVA", max_digits=12, decimal_places=2, default=0)
+    alicuota_iva = models.DecimalField("Alícuota IVA %", max_digits=5, decimal_places=2, default=16)
+    
+    # Retenciones (opcionales)
+    iva_retenido = models.DecimalField("IVA retenido", max_digits=12, decimal_places=2, default=0, null=True, blank=True)
+    numero_comprobante = models.CharField("N° comprobante retención", max_length=20, blank=True)
+    
+    # Notas de crédito asociadas
+    notas_credito_total = models.DecimalField("Total notas de crédito", max_digits=12, decimal_places=2, default=0)
+    
+    fecha_creacion = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-fecha_factura', '-numero_factura']
+        verbose_name = "Libro de Venta"
+        verbose_name_plural = "Libro de Ventas"
+    
+    @property
+    def total_neto(self):
+        return (self.total_facturado - self.notas_credito_total).quantize(__import__("decimal").Decimal("0.01"))
+
+    def __str__(self):
+        return f"Libro Venta #{self.numero_control} - Factura {self.numero_factura}"

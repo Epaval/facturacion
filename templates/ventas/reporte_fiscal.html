@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Reporte fiscal SENIAT</h1>
+<p class="subtitulo">Resumen del período {{ mes }}/{{ anio }}</p>
+
+<form method="get" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap">
+  <select name="mes">
+    {% for m, nombre in meses %}
+    <option value="{{ m }}" {% if mes == m %}selected{% endif %}>{{ nombre }}</option>
+    {% endfor %}
+  </select>
+  <select name="anio">
+    {% for y in anios %}
+    <option value="{{ y }}" {% if anio == y %}selected{% endif %}>{{ y }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-azul" type="submit">Generar reporte</button>
+</form>
+<form style="display:flex;gap:10px;margin-bottom:14px" onsubmit="event.preventDefault()">
+  <a class="btn btn-verde" href="{% url 'ventas:exportar_reporte_fiscal' %}?mes={{ mes }}&anio={{ anio }}">Exportar CSV</a>
+  <a class="btn btn-borde" target="_blank" href="{% url 'ventas:reporte_fiscal_print' %}?mes={{ mes }}&anio={{ anio }}">Imprimir</a>
+</form>
+
+<div class="panel" style="display:flex;gap:26px;flex-wrap:wrap;margin-bottom:14px">
+  <div><span class="subtitulo">Total ventas ({{ cantidad_ventas }})</span><br><strong>Bs {{ total_ventas }}</strong></div>
+  <div><span class="subtitulo">Base imponible</span><br><strong>Bs {{ total_base }}</strong></div>
+  <div><span class="subtitulo">IVA generado</span><br><strong>Bs {{ total_iva }}</strong></div>
+  <div><span class="subtitulo">Notas de crédito ({{ cantidad_notas }})</span><br><strong style="color:var(--rojo)">Bs {{ total_notas }}</strong></div>
+  <div><span class="subtitulo">Total neto</span><br><strong style="color:var(--verde)">Bs {{ total_neto }}</strong></div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+  <div class="panel">
+    <h2>Ventas por método de pago</h2>
+    <table>
+      <thead><tr><th>Método</th><th>Facturas</th><th>Total</th></tr></thead>
+      <tbody>
+      {% for label, total, n in por_metodo %}
+        <tr><td>{{ label }}</td><td>{{ n }}</td><td>Bs {{ total }}</td></tr>
+      {% empty %}
+        <tr><td colspan="3">Sin datos en el período.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  <div class="panel">
+    <h2>Top 10 clientes</h2>
+    <table>
+      <thead><tr><th>Cliente</th><th>Facturas</th><th>Total</th></tr></thead>
+      <tbody>
+      {% for item in top_clientes %}
+        <tr><td>{{ item.cliente.full_name }}</td><td>{{ item.n }}</td><td>Bs {{ item.total }}</td></tr>
+      {% empty %}
+        <tr><td colspan="3">Sin datos en el período.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<div class="panel">
+  <h2>Detalle de ventas del período</h2>
+  <table>
+    <thead><tr><th>N°</th><th>Fecha</th><th>Cliente</th><th>Método</th><th>Base imp.</th><th>IVA</th><th>Total</th></tr></thead>
+    <tbody>
+    {% for v in ventas %}
+      <tr>
+        <td><a href="{% url 'ventas:detail' v.pk %}">{{ v.numero|stringformat:"06d" }}</a></td>
+        <td>{{ v.fecha|date:"d/m/Y H:i" }}</td>
+        <td>{% if v.cliente %}{{ v.cliente.full_name }}{% else %}Consumidor final{% endif %}</td>
+        <td>{{ v.get_metodo_pago_display }}</td>
+        <td>Bs {{ v.base_imponible }}</td>
+        <td>Bs {{ v.monto_iva }}</td>
+        <td><strong>Bs {{ v.total }}</strong></td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="7">No hay ventas en este período.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+
+<style>
+@media print {
+  .barra-teclas, .topbar, nav, form, .btn { display: none !important; }
+}
+</style>

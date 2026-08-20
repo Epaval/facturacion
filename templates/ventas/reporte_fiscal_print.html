@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte fiscal {{ mes }}/{{ anio }}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 12px; color: #111; margin: 24px; }
+  h1 { font-size: 18px; margin: 0 0 4px; }
+  h2 { font-size: 14px; margin: 18px 0 6px; border-bottom: 1px solid #333; padding-bottom: 4px; }
+  p { margin: 2px 0; }
+  table { width: 100%; border-collapse: collapse; margin-top: 6px; }
+  th, td { border: 1px solid #999; padding: 4px 6px; text-align: left; }
+  th { background: #eee; }
+  .der { text-align: right; }
+  .tot { font-weight: bold; }
+  .btn { margin-top: 14px; padding: 8px 16px; font-size: 13px; cursor: pointer; }
+  @media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<h1>{{ config.nombre|default:"Mi Negocio" }}</h1>
+<p><strong>RIF:</strong> {{ config.rif }}{% if config.nit %} · <strong>NIT:</strong> {{ config.nit }}{% endif %}</p>
+<p><strong>REPORTE FISCAL SENIAT — Período {{ mes }}/{{ anio }}</strong></p>
+<p>Generado: {% now "d/m/Y H:i" %} · {{ user.full_name }}</p>
+
+<h2>Resumen del período</h2>
+<table>
+  <tr><th>Total ventas ({{ cantidad_ventas }} facturas)</th><td class="der tot">Bs {{ total_ventas }}</td></tr>
+  <tr><th>Base imponible</th><td class="der">Bs {{ total_base }}</td></tr>
+  <tr><th>IVA generado (16%)</th><td class="der">Bs {{ total_iva }}</td></tr>
+  <tr><th>Notas de crédito ({{ cantidad_notas }})</th><td class="der">Bs {{ total_notas }}</td></tr>
+  <tr><th>TOTAL NETO</th><td class="der tot">Bs {{ total_neto }}</td></tr>
+</table>
+
+<h2>Ventas por método de pago</h2>
+<table>
+  <thead><tr><th>Método</th><th>Facturas</th><th class="der">Total</th></tr></thead>
+  <tbody>
+  {% for label, total, n in por_metodo %}
+  <tr><td>{{ label }}</td><td>{{ n }}</td><td class="der">Bs {{ total }}</td></tr>
+  {% empty %}
+  <tr><td colspan="3">Sin ventas en el período.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Detalle de ventas</h2>
+<table>
+  <thead><tr><th>N° Factura</th><th>N° Control</th><th>Fecha</th><th>Cliente</th><th>RIF/CI</th><th class="der">Base imp.</th><th class="der">IVA</th><th class="der">Total</th></tr></thead>
+  <tbody>
+  {% for v in ventas %}
+  <tr>
+    <td>{{ v.numero|stringformat:"06d" }}</td>
+    <td>{{ v.libro_venta.numero_control|default:"—" }}</td>
+    <td>{{ v.fecha|date:"d/m/Y" }}</td>
+    <td>{% if v.cliente %}{{ v.cliente.full_name }}{% else %}Consumidor final{% endif %}</td>
+    <td>{{ v.cliente.ci_nit|default:"" }}</td>
+    <td class="der">Bs {{ v.base_imponible }}</td>
+    <td class="der">Bs {{ v.monto_iva }}</td>
+    <td class="der tot">Bs {{ v.total }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="8">Sin ventas en el período.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<h2>Notas de crédito del período</h2>
+<table>
+  <thead><tr><th>N° NC</th><th>Factura</th><th>Fecha</th><th>Cliente</th><th>Motivo</th><th class="der">Total</th></tr></thead>
+  <tbody>
+  {% for n in notas %}
+  <tr>
+    <td>{{ n.id }}</td>
+    <td>{{ n.factura.numero|stringformat:"06d" }}</td>
+    <td>{{ n.fecha|date:"d/m/Y" }}</td>
+    <td>{% if n.factura.cliente %}{{ n.factura.cliente.full_name }}{% else %}Consumidor final{% endif %}</td>
+    <td>{{ n.motivo }}</td>
+    <td class="der">Bs {{ n.total }}</td>
+  </tr>
+  {% empty %}
+  <tr><td colspan="6">Sin notas de crédito en el período.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<button class="btn no-print" onclick="window.print()">🖨 Imprimir (Ctrl+P)</button>
+</body>
+</html>
