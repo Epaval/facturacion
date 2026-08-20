@@ -1,8 +1,5 @@
-// ===== POS: altura dinámica + navegación de líneas con teclado =====
+// ===== POS: altura dinámica =====
 (function () {
-  if (window.__posInit) return;
-  window.__posInit = true;
-
   function ajustarAltura() {
     var cont = document.querySelector('.pos-fullscreen');
     if (!cont) return;
@@ -12,7 +9,10 @@
   window.addEventListener('resize', ajustarAltura);
   document.addEventListener('DOMContentLoaded', ajustarAltura);
   ajustarAltura();
+})();
 
+// ===== POS: navegación de líneas del ticket (↑/↓/Supr/+/-) =====
+(function () {
   var sel = -1;
   function lineas() {
     return document.querySelectorAll('.ticket-scroll .ticket-linea[data-indice], .ticket-lista .ticket-linea[data-indice]');
@@ -49,4 +49,63 @@
     var sc = document.querySelector('.ticket-scroll');
     if (sc) sc.scrollTop = sc.scrollHeight;
   });
+})();
+
+// ===== POS: tabla de resultados (flechas + cantidad + Enter) =====
+(function () {
+  var selTabla = -1;
+  function filas() {
+    return Array.prototype.slice.call(
+      document.querySelectorAll('.pos-left table tbody tr')
+    ).filter(function (tr) { return tr.querySelector('form.fila-agregar'); });
+  }
+  function inputDe(fila) { return fila.querySelector('input[name="cantidad"]'); }
+  function pintar() {
+    filas().forEach(function (f, i) { f.classList.toggle('fila-seleccionada', i === selTabla); });
+    if (selTabla >= 0 && filas()[selTabla]) filas()[selTabla].scrollIntoView({ block: 'nearest' });
+  }
+
+  // Sincroniza selección si se toca un input de fila con el mouse
+  document.addEventListener('focusin', function (e) {
+    var tr = e.target.closest ? e.target.closest('tr') : null;
+    if (tr && tr.querySelector('form.fila-agregar')) {
+      var idx = filas().indexOf(tr);
+      if (idx >= 0) { selTabla = idx; pintar(); }
+    }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if (!document.querySelector('.pos-fullscreen')) return;
+    var fl = filas();
+    if (!fl.length) return; // sin resultados: las flechas manejan el ticket
+    var active = document.activeElement;
+    var tag = active ? active.tagName : '';
+    var enBusqueda = active === document.querySelector('input[name="q"]');
+    var enInputFila = !!(active && active.closest && active.closest('form.fila-agregar') && tag === 'INPUT');
+    if (tag === 'TEXTAREA' || tag === 'SELECT') return;
+    if (tag === 'INPUT' && !enBusqueda && !enInputFila) return;
+
+    if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      selTabla = e.key === 'ArrowDown'
+        ? (selTabla + 1) % fl.length
+        : (selTabla <= 0 ? fl.length - 1 : selTabla - 1);
+      pintar();
+      if (enInputFila) { var i = inputDe(fl[selTabla]); if (i) i.focus(); }
+    } else if (/^[0-9.,]$/.test(e.key) && (enBusqueda || tag === '' || tag === 'BODY')) {
+      // Escribir un número con fila seleccionada edita su cantidad
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (selTabla < 0) { selTabla = 0; pintar(); }
+      var inp = inputDe(fl[selTabla]);
+      if (inp) { inp.focus(); inp.value = (e.key === ',') ? '.' : e.key; }
+    } else if (e.key === 'Enter' && selTabla >= 0) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      var f = fl[selTabla].querySelector('form');
+      if (f) f.submit();
+    } else if (e.key === 'Escape' && enInputFila) {
+      e.preventDefault(); e.stopImmediatePropagation();
+      var q = document.querySelector('input[name="q"]');
+      if (q) q.focus();
+    }
+  }, true);
 })();

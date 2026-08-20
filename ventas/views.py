@@ -172,6 +172,13 @@ class POSView(LoginRequiredMixin, View):
                 cantidad = Decimal(request.POST.get("cantidad", "1").replace(",", ".") or "1")
             except InvalidOperation:
                 cantidad = Decimal("1")
+            if producto.por_peso and not request.POST.get("desde_modal"):
+                total = sum((Decimal(l["subtotal"]) for l in lineas), Decimal("0.00")).quantize(Decimal("0.01"))
+                return render(request, "ventas/pos.html", {
+                    "lineas": lineas, "productos": None, "q": "",
+                    "total": total, **ctx_iva(lineas, total), "modal_producto": producto,
+                    "title": "Nueva venta (POS)",
+                })
             error = self._agregar(lineas, producto, cantidad)
             if error:
                 messages.error(request, error)

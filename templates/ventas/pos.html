@@ -125,6 +125,7 @@
       {% csrf_token %}
       <input type="hidden" name="accion" value="agregar">
       <input type="hidden" name="producto" value="{{ modal_producto.pk }}">
+      <input type="hidden" name="desde_modal" value="1">
       <label>Cantidad ({{ modal_producto.unidad }})</label>
       <input type="number" name="cantidad" step="0.001" min="0.001" placeholder="0.000" autofocus required>
       <div style="display:flex;gap:8px;margin-top:14px">
@@ -135,4 +136,7 @@
   </div>
 </div>
 {% endif %}
+<style>
+.fila-seleccionada { background: #e0f2fe !important; outline: 2px solid #0ea5e9; }
+</style>
 {% endblock %}
