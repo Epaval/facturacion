@@ -16,6 +16,7 @@
     <nav class="nav-links">
       <a href="{% url 'ventas:pos' %}">Nueva venta</a>
       <a href="{% url 'ventas:list' %}">Ventas</a>
+      <a href="{% url 'ventas:notas_credito_list' %}">Notas de crédito</a>
       {% if user.es_admin %}<a href="{% url 'productos:list' %}">Productos</a>
       <a href="{% url 'accounts:usuarios' %}">Usuarios</a>
       <a href="{% url 'config_negocio' %}">Datos del negocio</a>

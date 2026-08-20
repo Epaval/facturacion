@@ -10,7 +10,7 @@ from django.views import View
 from django.views.generic import ListView
 
 from clientes.models import Cliente
-from .models import Caja, Pago, Venta
+from .models import Caja, NotaCredito, Pago, Venta
 from core.models import ImpresoraFiscal
 
 
@@ -31,13 +31,20 @@ def resumen_caja(caja):
     efectivo = sum((p["s"] for p in por_metodo if p["metodo"] == "efectivo"), Decimal("0.00")).quantize(dos)
     cambio = (ventas.aggregate(s=Sum("cambio"))["s"] or Decimal("0.00")).quantize(dos)
 
+    notas = NotaCredito.objects.filter(caja_procesamiento=caja)
+    if caja.fecha_cierre:
+        notas = notas.filter(fecha__lte=caja.fecha_cierre)
+    total_notas = (notas.aggregate(s=Sum("total"))["s"] or Decimal("0.00")).quantize(dos)
+
     return {
         "total_vendido": total_vendido,
         "n_ventas": ventas.count(),
         "por_metodo": por_metodo,
         "efectivo": efectivo,
         "cambio": cambio,
-        "esperado": (caja.monto_inicial + efectivo - cambio).quantize(dos),
+        "n_notas": notas.count(),
+        "total_notas": total_notas,
+        "esperado": (caja.monto_inicial + efectivo - cambio - total_notas).quantize(dos),
     }
 
 

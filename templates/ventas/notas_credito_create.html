@@ -1,0 +1,103 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Nueva nota de crédito</h1>
+<p class="subtitulo">Ingresa el número de factura para listar los productos devolvibles</p>
+
+<form method="get" style="margin-bottom:16px">
+  <input type="text" name="q" value="{{ q }}" placeholder="Número de factura (ej: 123)" autofocus>
+</form>
+
+{% if factura %}
+<div class="panel" style="padding:16px;margin-bottom:16px">
+  <h3>Factura #{{ factura.numero|stringformat:"06d" }}</h3>
+  <p>
+    <strong>Cliente:</strong> {% if factura.cliente %}{{ factura.cliente.full_name }}{% else %}Consumidor final{% endif %} ·
+    <strong>Fecha:</strong> {{ factura.fecha|date:"d/m/Y H:i" }} ·
+    <strong>Total:</strong> Bs {{ factura.total }}
+  </p>
+</div>
+
+<form method="post" id="form-nc">
+  {% csrf_token %}
+  <input type="hidden" name="factura_id" value="{{ factura.pk }}">
+  
+  {% if productos %}
+  <table>
+    <thead><tr>
+      <th>Producto</th><th>Facturado</th><th>Ya devuelto</th>
+      <th>Disponible</th><th>Cantidad a devolver</th>
+    </tr></thead>
+    <tbody>
+    {% for p in productos %}
+      <tr>
+        <td>{{ p.producto.nombre }}</td>
+        <td>{{ p.cantidad_original }} {{ p.producto.unidad }}</td>
+        <td>{{ p.devuelto }} {{ p.producto.unidad }}</td>
+        <td><strong>{{ p.remanente }}</strong> {{ p.producto.unidad }}</td>
+        <td>
+          <input type="number" name="producto_{{ p.detalle.pk }}"
+                 value="0" min="0" max="{{ p.remanente }}"
+                 step="{% if p.producto.por_peso %}0.001{% else %}1{% endif %}"
+                 style="width:100px" data-precio="{{ p.precio }}" data-subtotal="0">
+          <small style="margin-left:8px">Bs <span class="subtotal-line">0.00</span></small>
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  <div style="margin-top:14px">
+    <label><strong>Motivo de la devolución:</strong></label>
+    <select name="motivo" required style="width:100%">
+      <option value="" disabled selected>Selecciona el motivo…</option>
+      <option value="Producto averiado">Producto averiado</option>
+      <option value="Error en la factura">Error en la factura</option>
+      <option value="Decisión del cliente">Decisión del cliente</option>
+    </select>
+  </div>
+
+  <div class="panel" style="padding:16px;margin-top:16px;text-align:right">
+    <p style="font-size:1.3rem"><strong>Total a devolver: Bs <span id="total-nc">0.00</span></strong></p>
+  </div>
+
+  <div style="margin-top:14px;display:flex;gap:8px">
+    <button class="btn btn-verde" type="submit">Continuar (F8)</button>
+    <a class="btn btn-borde" href="{% url 'ventas:notas_credito_list' %}">Cancelar</a>
+  </div>
+  {% else %}
+  <p class="subtitulo">No hay productos disponibles para devolver en esta factura (todo fue ya devuelto).</p>
+  {% endif %}
+</form>
+{% elif q %}
+<p class="mensaje error">No se encontró una factura completada con el número "{{ q }}".</p>
+{% endif %}
+
+<script>
+document.addEventListener('input', function(e) {
+  if (e.target.matches('input[name^="producto_"]')) {
+    const cant = parseFloat(e.target.value) || 0;
+    const precio = parseFloat(e.target.dataset.precio);
+    const subtotal = (cant * precio).toFixed(2);
+    e.target.nextElementSibling.textContent = subtotal;
+    e.target.dataset.subtotal = subtotal;
+    calcularTotal();
+  }
+});
+
+function calcularTotal() {
+  let total = 0;
+  document.querySelectorAll('input[name^="producto_"]').forEach(function(i) {
+    total += parseFloat(i.dataset.subtotal || 0);
+  });
+  document.getElementById('total-nc').textContent = total.toFixed(2);
+}
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F8') {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    document.getElementById('form-nc').submit();
+  }
+}, true);
+</script>
+{% endblock %}

@@ -7,6 +7,7 @@ from django.db.models import Max
 
 
 class Venta(models.Model):
+    impresa = models.BooleanField("Impresa", default=False)
     METODOS_PAGO = [
         ("efectivo", "Efectivo"), ("transferencia", "Transferencia"),
         ("punto_venta", "Punto de venta"),
@@ -105,3 +106,31 @@ class Caja(models.Model):
 
     def __str__(self):
         return f"Caja {self.id} · {self.usuario} · {self.get_estado_display()}"
+
+
+class NotaCredito(models.Model):
+    """Nota de crédito: devolución de productos de una factura."""
+    factura = models.ForeignKey(Venta, on_delete=models.PROTECT, related_name='notas_credito')
+    caja_procesamiento = models.ForeignKey(Caja, on_delete=models.PROTECT, related_name='notas_credito_procesadas')
+    creado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='notas_credito_creadas')
+    autorizado_por = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name='notas_credito_autorizadas')
+    fecha = models.DateTimeField(auto_now_add=True)
+    motivo = models.CharField(max_length=200)
+    total = models.DecimalField(max_digits=12, decimal_places=2, default=0)
+    
+    class Meta:
+        ordering = ['-fecha']
+    
+    def __str__(self):
+        return f"NC #{self.id} - Factura #{self.factura.numero}"
+
+
+class NotaCreditoDetalle(models.Model):
+    """Detalle de productos devueltos en una nota de crédito."""
+    nota_credito = models.ForeignKey(NotaCredito, on_delete=models.CASCADE, related_name='detalles')
+    detalle_venta = models.ForeignKey(DetalleVenta, on_delete=models.PROTECT, related_name='devoluciones')
+    cantidad_devuelta = models.DecimalField(max_digits=12, decimal_places=3)
+    monto = models.DecimalField(max_digits=12, decimal_places=2)
+    
+    def __str__(self):
+        return f"{self.detalle_venta.producto.nombre} x{self.cantidad_devuelta}"

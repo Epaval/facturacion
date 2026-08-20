@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Confirmar nota de crédito</h1>
+<p class="subtitulo">Revisa los datos antes de autorizar</p>
+
+<div class="panel" style="padding:16px;margin-bottom:16px">
+  <p><strong>Factura:</strong> #{{ factura.numero|stringformat:"06d" }}</p>
+  <p><strong>Cliente:</strong> {% if factura.cliente %}{{ factura.cliente.full_name }}{% else %}Consumidor final{% endif %}</p>
+  <p><strong>Motivo:</strong> {{ motivo }}</p>
+</div>
+
+<table>
+  <thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Subtotal</th></tr></thead>
+  <tbody>
+  {% for d in detalles %}
+    <tr>
+      <td>{{ d.detalle.producto.nombre }}</td>
+      <td>{{ d.cantidad }} {{ d.detalle.producto.unidad }}</td>
+      <td>Bs {{ d.detalle.precio_unitario }}</td>
+      <td>Bs {{ d.monto }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="panel" style="padding:16px;margin-top:16px;text-align:right">
+  <p style="font-size:1.3rem"><strong>TOTAL: Bs {{ total }}</strong></p>
+</div>
+
+<div style="margin-top:14px;display:flex;gap:8px">
+  {% if user.es_admin %}
+  <button class="btn btn-verde" type="button" onclick="autorizar('')">Autorizar y crear (F8)</button>
+  {% else %}
+  <button class="btn btn-verde" type="button" onclick="document.getElementById('modal-auth').style.display='flex'">Solicitar autorización admin (F8)</button>
+  {% endif %}
+  <a class="btn btn-borde" href="{% url 'ventas:notas_credito_create' %}?q={{ factura.numero }}">Volver</a>
+</div>
+
+<!-- Modal de autorización -->
+<div id="modal-auth" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);align-items:center;justify-content:center;z-index:1000">
+  <div class="panel" style="padding:24px;width:400px;max-width:90%">
+    <h2>Autorización requerida</h2>
+    <p class="subtitulo">Ingresa las credenciales de un administrador</p>
+    <input type="text" id="auth-user" placeholder="Usuario" autofocus style="width:100%;margin-bottom:8px">
+    <input type="password" id="auth-pass" placeholder="Contraseña" style="width:100%;margin-bottom:12px">
+    <div id="auth-error" style="color:#dc2626;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-verde" type="button" onclick="autorizar()" style="flex:1">Autorizar (Enter)</button>
+      <button class="btn btn-borde" type="button" onclick="document.getElementById('modal-auth').style.display='none'">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+function getCookie(n){var c=document.cookie.match(new RegExp("(^| )"+n+"=([^;]+)"));return c?decodeURIComponent(c[2]):"";}
+
+function autorizar(forcedUser) {
+  const user = forcedUser || document.getElementById('auth-user').value;
+  const pass = document.getElementById('auth-pass').value;
+  const error = document.getElementById('auth-error');
+  error.textContent = '';
+  
+  fetch("{% url 'ventas:notas_credito_autorizar' %}", {
+    method: 'POST',
+    headers: {'X-CSRFToken': getCookie('csrftoken')},
+    body: new URLSearchParams({username: user, password: pass})
+  })
+  .then(r => r.json())
+  .then(data => {
+    if (data.ok) {
+      window.location.href = data.redirect;
+    } else {
+      error.textContent = data.error || 'Error desconocido';
+    }
+  })
+  .catch(err => {
+    error.textContent = 'Error de red';
+  });
+}
+
+document.addEventListener('keydown', function(e) {
+  const modalOpen = document.getElementById('modal-auth').style.display === 'flex';
+  if (e.key === 'F8') {
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    {% if user.es_admin %}
+    autorizar('');
+    {% else %}
+    document.getElementById('modal-auth').style.display = 'flex';
+    document.getElementById('auth-user').focus();
+    {% endif %}
+  } else if (e.key === 'Enter' && modalOpen) {
+    e.preventDefault();
+    autorizar();
+  } else if (e.key === 'Escape' && modalOpen) {
+    document.getElementById('modal-auth').style.display = 'none';
+  }
+}, true);
+
+// Si el usuario es admin, autorizar directo
+{% if user.es_admin %}
+// Auto-focus en el botón
+{% endif %}
+</script>
+{% endblock %}

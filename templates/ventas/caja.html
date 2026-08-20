@@ -34,11 +34,12 @@
         <p class="subtitulo">Sin pagos aún.</p>
       {% endfor %}
       <div class="ticket-linea"><span>Vuelto entregado</span><strong style="color:var(--rojo)">Bs {{ cambio }}</strong></div>
+      <div class="ticket-linea"><span>Notas de crédito ({{ n_notas }})</span><strong style="color:var(--rojo)">Bs {{ total_notas }}</strong></div>
     </div>
     <div class="panel">
       <h2>Efectivo esperado en gaveta</h2>
       <div class="ticket-total">Bs {{ esperado }}</div>
-      <p class="subtitulo">= inicial + efectivo recibido − vuelto entregado</p>
+      <p class="subtitulo">= inicial + efectivo recibido − vuelto − notas de crédito</p>
       <a class="btn btn-rojo" style="width:100%" href="{% url 'ventas:caja_cerrar' %}">Cerrar caja y contar efectivo</a>
       <a class="btn btn-borde" style="width:100%;margin-top:8px" href="{% url 'ventas:caja_list' %}">Historial de cajas</a>
     </div>

@@ -28,7 +28,7 @@
         <td>{{ p.categoria.nombre }}</td>
         <td>Bs {{ p.precio_venta }}</td>
         <td>{% if p.stock_bajo %}<span class="badge badge-rojo">{{ p.stock }} {{ p.unidad }}</span>{% else %}{{ p.stock }} {{ p.unidad }}{% endif %}</td>
-        <td><a class="btn btn-borde btn-chico" href="{% url 'productos:update' p.pk %}">Editar</a></td>
+        <td><a class="btn btn-borde btn-chico" href="{% url 'productos:update' p.pk %}?volver={{ request.get_full_path|urlencode }}">Editar</a></td>
       </tr>
     {% empty %}
       <tr><td colspan="6">No hay productos.</td></tr>

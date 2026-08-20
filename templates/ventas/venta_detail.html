@@ -58,8 +58,12 @@
   </div>
 </div>
 
-<div style="margin-top:14px;display:flex;gap:8px">
+<div style="margin-top:14px;display:flex;gap:8px;align-items:center">
+  {% if permitir_imprimir %}
   <button class="btn btn-azul" type="button" onclick="imprimirConSpinner()">Imprimir (F8)</button>
+  {% else %}
+  <span class="badge badge-azul">Factura emitida · solo consulta</span>
+  {% endif %}
   <a class="btn btn-borde" href="{% url 'ventas:list' %}">Volver al historial</a>
 </div>
 
@@ -79,7 +83,12 @@
 .ticket-footer { padding-top: 10px; text-align: center; font-size: .9rem; color: #666; }
 </style>
 <script>
+var PUEDE_IMPRIMIR = {% if permitir_imprimir %}true{% else %}false{% endif %};
+function getCookie(n){var c=document.cookie.match(new RegExp("(^| )"+n+"=([^;]+)"));return c?decodeURIComponent(c[2]):"";}
 function imprimirConSpinner() {
+  if (!PUEDE_IMPRIMIR) return;
+  PUEDE_IMPRIMIR = false;
+  fetch("{% url 'ventas:marcar_impresa' venta.pk %}", {method:"POST", headers:{"X-CSRFToken": getCookie("csrftoken")}});
   if (window.mostrarOverlay) mostrarOverlay("Imprimiendo factura…");
   setTimeout(function () {
     window.print();

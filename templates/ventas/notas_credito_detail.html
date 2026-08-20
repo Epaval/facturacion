@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Nota de crédito #{{ nota.id }}</h1>
+<p class="subtitulo">Asociada a la <a href="{% url 'ventas:detail' nota.factura.pk %}">Factura #{{ nota.factura.numero|stringformat:"06d" }}</a></p>
+
+<div class="panel" style="padding:16px;margin-bottom:16px">
+  <p><strong>Cliente:</strong> {% if nota.factura.cliente %}{{ nota.factura.cliente.full_name }} ({{ nota.factura.cliente.ci_nit|default:"—" }}){% else %}Consumidor final{% endif %}</p>
+  <p><strong>Fecha:</strong> {{ nota.fecha|date:"d/m/Y H:i" }}</p>
+  <p><strong>Motivo:</strong> {{ nota.motivo }}</p>
+  <p><strong>Creada por:</strong> {{ nota.creado_por.full_name }}</p>
+  <p><strong>Autorizada por:</strong> {{ nota.autorizado_por.full_name }}</p>
+</div>
+
+<table>
+  <thead><tr><th>Producto</th><th>Cant. facturada</th><th>Cant. devuelta</th><th>Precio</th><th>Subtotal</th></tr></thead>
+  <tbody>
+  {% for d in nota.detalles.all %}
+    <tr>
+      <td>{{ d.detalle_venta.producto.nombre }}</td>
+      <td>{{ d.detalle_venta.cantidad }} {{ d.detalle_venta.producto.unidad }}</td>
+      <td>{{ d.cantidad_devuelta }} {{ d.detalle_venta.producto.unidad }}</td>
+      <td>Bs {{ d.detalle_venta.precio_unitario }}</td>
+      <td>Bs {{ d.monto }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<div class="panel" style="padding:16px;margin-top:16px;text-align:right">
+  <p style="font-size:1.3rem"><strong>TOTAL NOTA DE CRÉDITO: Bs {{ nota.total }}</strong></p>
+</div>
+
+<div style="margin-top:14px">
+  <a class="btn btn-borde" href="{% url 'ventas:notas_credito_list' %}">Volver al listado</a>
+</div>
+{% endblock %}

@@ -5,6 +5,7 @@ from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
 from django.db.models import Q
+from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
 from django.views.generic import DetailView, ListView
@@ -354,6 +355,7 @@ class PagoView(LoginRequiredMixin, View):
             request.session["pos_pagos"] = []
             request.session["pos_cliente"] = None
             messages.success(request, f"Venta #{venta.numero} registrada por Bs {venta.total}")
+            request.session["venta_recien_emitida"] = venta.pk
             return redirect("ventas:detail", pk=venta.pk)
 
         return redirect("ventas:pago")
@@ -395,4 +397,14 @@ class VentaDetailView(LoginRequiredMixin, DetailView):
         ctx["total_items"] = items
         from core.models import ConfigNegocio
         ctx["config"] = ConfigNegocio.get()
+        ctx["permitir_imprimir"] = self.request.session.pop("venta_recien_emitida", None) == self.object.pk
         return ctx
+
+
+class MarcarImpresaView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        venta = get_object_or_404(Venta, pk=pk)
+        if not venta.impresa:
+            venta.impresa = True
+            venta.save(update_fields=["impresa"])
+        return JsonResponse({"ok": True})

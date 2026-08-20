@@ -84,7 +84,14 @@ class ProductoUpdateView(LoginRequiredMixin, AdminRequiredMixin, SuccessMessageM
     def get_context_data(self, **kwargs):
         ctx = super().get_context_data(**kwargs)
         ctx["title"] = f"Editar producto: {self.object.nombre}"
+        ctx["volver"] = self.request.GET.get("volver", "")
         return ctx
+
+    def get_success_url(self):
+        volver = self.request.POST.get("volver") or self.request.GET.get("volver") or ""
+        if volver.startswith("/productos/"):
+            return volver
+        return str(reverse_lazy("productos:list"))
 
 
 class ProductoImportView(AdminRequiredMixin, TemplateView):

@@ -4,6 +4,7 @@
   <h1>{{ title }}</h1>
   <form method="post" data-guardar>
     {% csrf_token %}
+    <input type="hidden" name="volver" value="{{ volver }}">
     {{ form.as_p }}
     <div style="display:flex;gap:10px;margin-top:14px">
       <button type="submit" class="btn btn-verde">Guardar (F8)</button>
