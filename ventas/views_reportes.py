@@ -18,6 +18,13 @@ MESES = [(1, "Enero"), (2, "Febrero"), (3, "Marzo"), (4, "Abril"), (5, "Mayo"), 
 ANIOS = [2024, 2025, 2026]
 
 
+def q2(x):
+    """Redondea a 2 decimales (corrige floats de Sum en SQLite)."""
+    if x is None:
+        return Decimal("0.00")
+    return Decimal(str(x)).quantize(Decimal("0.01"))
+
+
 class LibroVentasView(LoginRequiredMixin, AdminRequiredMixin, ListView):
     template_name = "ventas/libro_ventas.html"
     context_object_name = "libro_ventas"
@@ -38,17 +45,14 @@ class LibroVentasView(LoginRequiredMixin, AdminRequiredMixin, ListView):
         t = self.get_queryset().aggregate(
             tf=Sum("total_facturado"), ex=Sum("exento"), bi=Sum("base_imponible_iva"),
             iv=Sum("monto_iva"), nc=Sum("notas_credito_total"))
+        tf, ex, bi, iv, nc = q2(t["tf"]), q2(t["ex"]), q2(t["bi"]), q2(t["iv"]), q2(t["nc"])
         ctx.update({
             "title": "Libro de ventas",
             "mes": self.request.GET.get("mes", ""),
             "anio": self.request.GET.get("anio", ""),
             "meses": MESES, "anios": ANIOS,
-            "total_facturado": t["tf"] or Decimal("0"),
-            "total_exento": t["ex"] or Decimal("0"),
-            "total_base": t["bi"] or Decimal("0"),
-            "total_iva": t["iv"] or Decimal("0"),
-            "total_nc": t["nc"] or Decimal("0"),
-            "total_neto": (t["tf"] or Decimal("0")) - (t["nc"] or Decimal("0")),
+            "total_facturado": tf, "total_exento": ex, "total_base": bi,
+            "total_iva": iv, "total_nc": nc, "total_neto": tf - nc,
         })
         return ctx
 
@@ -62,14 +66,14 @@ class ReporteFiscalView(LoginRequiredMixin, AdminRequiredMixin, View):
         ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada")
         notas = NotaCredito.objects.filter(fecha__year=anio, fecha__month=mes)
 
-        total_ventas = ventas.aggregate(s=Sum("total"))["s"] or Decimal("0")
-        total_base = ventas.aggregate(s=Sum("base_imponible"))["s"] or Decimal("0")
-        total_iva = ventas.aggregate(s=Sum("monto_iva"))["s"] or Decimal("0")
-        total_notas = notas.aggregate(s=Sum("total"))["s"] or Decimal("0")
+        total_ventas = q2(ventas.aggregate(s=Sum("total"))["s"])
+        total_base = q2(ventas.aggregate(s=Sum("base_imponible"))["s"])
+        total_iva = q2(ventas.aggregate(s=Sum("monto_iva"))["s"])
+        total_notas = q2(notas.aggregate(s=Sum("total"))["s"])
 
         por_metodo = []
         for metodo, label in Venta.METODOS_PAGO:
-            t = ventas.filter(metodo_pago=metodo).aggregate(s=Sum("total"))["s"] or Decimal("0")
+            t = q2(ventas.filter(metodo_pago=metodo).aggregate(s=Sum("total"))["s"])
             if t > 0:
                 por_metodo.append((label, t, ventas.filter(metodo_pago=metodo).count()))
 
@@ -77,7 +81,7 @@ class ReporteFiscalView(LoginRequiredMixin, AdminRequiredMixin, View):
         for cv in ventas.exclude(cliente=None).values("cliente").annotate(t=Sum("total")).order_by("-t")[:10]:
             c = Cliente.objects.filter(pk=cv["cliente"]).first()
             if c:
-                top_clientes.append({"cliente": c, "total": cv["t"], "n": ventas.filter(cliente=c).count()})
+                top_clientes.append({"cliente": c, "total": q2(cv["t"]), "n": ventas.filter(cliente=c).count()})
 
         ctx = {
             "title": f"Reporte fiscal {mes}/{anio}",
@@ -89,6 +93,38 @@ class ReporteFiscalView(LoginRequiredMixin, AdminRequiredMixin, View):
             "ventas": ventas, "notas": notas,
         }
         return render(request, "ventas/reporte_fiscal.html", ctx)
+
+
+class ReporteFiscalPrintView(LoginRequiredMixin, AdminRequiredMixin, View):
+    def get(self, request):
+        from core.models import ConfigNegocio
+        hoy = timezone.now()
+        mes = int(request.GET.get("mes") or hoy.month)
+        anio = int(request.GET.get("anio") or hoy.year)
+
+        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada").order_by("numero")
+        notas = NotaCredito.objects.filter(fecha__year=anio, fecha__month=mes).order_by("id")
+
+        total_ventas = q2(ventas.aggregate(s=Sum("total"))["s"])
+        total_base = q2(ventas.aggregate(s=Sum("base_imponible"))["s"])
+        total_iva = q2(ventas.aggregate(s=Sum("monto_iva"))["s"])
+        total_notas = q2(notas.aggregate(s=Sum("total"))["s"])
+
+        por_metodo = []
+        for metodo, label in Venta.METODOS_PAGO:
+            t = q2(ventas.filter(metodo_pago=metodo).aggregate(s=Sum("total"))["s"])
+            if t > 0:
+                por_metodo.append((label, t, ventas.filter(metodo_pago=metodo).count()))
+
+        ctx = {
+            "mes": mes, "anio": anio,
+            "config": ConfigNegocio.get(),
+            "total_ventas": total_ventas, "total_base": total_base, "total_iva": total_iva,
+            "total_notas": total_notas, "total_neto": total_ventas - total_notas,
+            "cantidad_ventas": ventas.count(), "cantidad_notas": notas.count(),
+            "por_metodo": por_metodo, "ventas": ventas, "notas": notas,
+        }
+        return render(request, "ventas/reporte_fiscal_print.html", ctx)
 
 
 class ExportarLibroVentasCSV(LoginRequiredMixin, AdminRequiredMixin, View):
@@ -109,7 +145,7 @@ class ExportarLibroVentasCSV(LoginRequiredMixin, AdminRequiredMixin, View):
         w.writerow(["N° Control", "N° Factura", "Fecha", "Cliente", "RIF/CI", "Total Facturado",
                     "Exento", "Base Imponible", "IVA %", "Monto IVA", "Notas Crédito", "Total Neto"])
         for lv in qs:
-            f = lambda x: str(x).replace(".", ",")
+            f = lambda x: str(q2(x)).replace(".", ",")
             w.writerow([lv.numero_control, lv.numero_factura, lv.fecha_factura.strftime("%d/%m/%Y"),
                         lv.cliente_nombre, lv.cliente_rif, f(lv.total_facturado), f(lv.exento),
                         f(lv.base_imponible_iva), f(lv.alicuota_iva), f(lv.monto_iva),
@@ -118,8 +154,6 @@ class ExportarLibroVentasCSV(LoginRequiredMixin, AdminRequiredMixin, View):
 
 
 class ExportarReporteFiscalCSV(LoginRequiredMixin, AdminRequiredMixin, View):
-    """Exporta el reporte fiscal del período a CSV."""
-
     def get(self, request):
         hoy = timezone.now()
         mes = int(request.GET.get("mes") or hoy.month)
@@ -132,7 +166,7 @@ class ExportarReporteFiscalCSV(LoginRequiredMixin, AdminRequiredMixin, View):
         response["Content-Disposition"] = f'attachment; filename="reporte_fiscal_{anio}-{mes:02d}.csv"'
         response.write("\ufeff")
         w = csv.writer(response, delimiter=";")
-        f = lambda x: str(x).replace(".", ",")
+        f = lambda x: str(q2(x)).replace(".", ",")
 
         w.writerow([f"REPORTE FISCAL SENIAT {mes:02d}/{anio}"])
         w.writerow([])
@@ -145,7 +179,7 @@ class ExportarReporteFiscalCSV(LoginRequiredMixin, AdminRequiredMixin, View):
                         v.cliente.full_name if v.cliente else "Consumidor final",
                         v.cliente.ci_nit if v.cliente else "", v.get_metodo_pago_display(),
                         f(v.base_imponible), f(v.monto_iva), f(v.total)])
-            tv += v.total; tb += v.base_imponible; ti += v.monto_iva
+            tv += q2(v.total); tb += q2(v.base_imponible); ti += q2(v.monto_iva)
         w.writerow([])
         w.writerow(["TOTALES", "", "", "", "", "", f(tb), f(ti), f(tv)])
         w.writerow([])
@@ -156,42 +190,8 @@ class ExportarReporteFiscalCSV(LoginRequiredMixin, AdminRequiredMixin, View):
             w.writerow([n.id, f"{n.factura.numero:06d}", n.fecha.strftime("%d/%m/%Y"),
                         n.factura.cliente.full_name if n.factura.cliente else "Consumidor final",
                         n.motivo, f(n.total)])
-            tn += n.total
+            tn += q2(n.total)
         w.writerow([])
         w.writerow(["TOTAL NOTAS DE CREDITO", "", "", "", "", f(tn)])
         w.writerow(["TOTAL NETO (VENTAS - NC)", "", "", "", "", f(tv - tn)])
         return response
-
-
-class ReporteFiscalPrintView(LoginRequiredMixin, AdminRequiredMixin, View):
-    """Versión imprimible del reporte fiscal (ventana nueva)."""
-
-    def get(self, request):
-        from core.models import ConfigNegocio
-        hoy = timezone.now()
-        mes = int(request.GET.get("mes") or hoy.month)
-        anio = int(request.GET.get("anio") or hoy.year)
-
-        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada").order_by("numero")
-        notas = NotaCredito.objects.filter(fecha__year=anio, fecha__month=mes).order_by("id")
-
-        total_ventas = ventas.aggregate(s=Sum("total"))["s"] or Decimal("0")
-        total_base = ventas.aggregate(s=Sum("base_imponible"))["s"] or Decimal("0")
-        total_iva = ventas.aggregate(s=Sum("monto_iva"))["s"] or Decimal("0")
-        total_notas = notas.aggregate(s=Sum("total"))["s"] or Decimal("0")
-
-        por_metodo = []
-        for metodo, label in Venta.METODOS_PAGO:
-            t = ventas.filter(metodo_pago=metodo).aggregate(s=Sum("total"))["s"] or Decimal("0")
-            if t > 0:
-                por_metodo.append((label, t, ventas.filter(metodo_pago=metodo).count()))
-
-        ctx = {
-            "mes": mes, "anio": anio,
-            "config": ConfigNegocio.get(),
-            "total_ventas": total_ventas, "total_base": total_base, "total_iva": total_iva,
-            "total_notas": total_notas, "total_neto": total_ventas - total_notas,
-            "cantidad_ventas": ventas.count(), "cantidad_notas": notas.count(),
-            "por_metodo": por_metodo, "ventas": ventas, "notas": notas,
-        }
-        return render(request, "ventas/reporte_fiscal_print.html", ctx)

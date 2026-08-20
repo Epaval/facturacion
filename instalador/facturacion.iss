@@ -1,11 +1,11 @@
 [Setup]
 AppName=FacturaFácil
-AppVersion=0.1.5
+AppVersion=0.1.6
 AppPublisher=FACDIN
 DefaultDirName={autopf}\Facturacion
 DefaultGroupName=FACDIN Facturación
 OutputDir=.
-OutputBaseFilename=FACDIN-Facturacion-Setup-0.1.5
+OutputBaseFilename=FACDIN-Facturacion-Setup-0.1.6
 Compression=lzma2/max
 SolidCompression=yes
 PrivilegesRequired=lowest
