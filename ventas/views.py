@@ -177,6 +177,20 @@ class POSView(LoginRequiredMixin, View):
             else:
                 request.session["pos_lineas"] = lineas
 
+        elif accion == "cantidad":
+            indice = int(request.POST.get("indice", 0))
+            delta = Decimal(request.POST.get("delta", "0"))
+            if 0 <= indice < len(lineas):
+                linea = lineas[indice]
+                producto = Producto.objects.filter(pk=linea["producto_id"]).first()
+                if producto:
+                    nueva = Decimal(linea["cantidad"]) + delta
+                    nueva = max(nueva, Decimal("0.001") if producto.por_peso else Decimal("1"))
+                    linea["cantidad"] = str(nueva)
+                    linea["subtotal"] = str((nueva * Decimal(linea["precio"])).quantize(Decimal("0.01")))
+                    request.session["pos_lineas"] = lineas
+            return redirect("ventas:pos")
+
         elif accion == "quitar":
             try:
                 idx = int(request.POST.get("indice"))

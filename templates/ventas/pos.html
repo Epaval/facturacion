@@ -1,11 +1,10 @@
 {% extends "base.html" %}
 
 {% block content %}
-<h1>Nueva venta</h1>
-<p class="subtitulo">Escanea el código de barras (o escríbelo y presiona Enter) para agregar directo al ticket</p>
+<div class="pos-fullscreen">
 
-<div class="pos-grid">
-  <div class="panel">
+  <!-- IZQUIERDA: escáner + búsqueda -->
+  <div class="panel pos-left">
     <form method="get">
       <input type="text" name="q" value="{{ q }}" placeholder="Código de barras o nombre (F2 / escáner)" autofocus>
     </form>
@@ -37,30 +36,12 @@
     {% endif %}
   </div>
 
-  <div class="panel">
-    <div class="ticket-fijo">
-      <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-        <span class="badge badge-azul" style="font-size:1rem;padding:6px 14px">{{ total_items }} producto{{ total_items|pluralize:"s" }}</span>
-        <div class="ticket-total" style="padding:6px 0">TOTAL: Bs {{ total }}</div>
-      </div>
-      <div class="ticket-linea"><span>Base imponible</span><strong>Bs {{ base_imponible }}</strong></div>
-      <div class="ticket-linea"><span>IVA 16% incluido</span><strong>Bs {{ iva_incluido }}</strong></div>
-      <form method="post" data-finalizar style="margin-top:10px">
-        {% csrf_token %}
-        <input type="hidden" name="accion" value="pagar">
-        <button class="btn btn-verde" style="width:100%" type="submit">Pasar a pagar (F10)</button>
-      </form>
-      <form method="post" style="margin-top:8px">
-        {% csrf_token %}
-        <input type="hidden" name="accion" value="vaciar">
-        <button class="btn btn-rojo" style="width:100%" type="submit">Vaciar ticket (Ctrl+Z)</button>
-      </form>
-    </div>
-
-    <h2 style="margin-top:16px">Ticket</h2>
-    <div class="ticket-lista">
+  <!-- DERECHA: ticket con scroll interno -->
+  <div class="panel pos-right">
+    <h2 style="margin:0 0 8px">Ticket</h2>
+    <div class="ticket-scroll ticket-lista">
       {% for l in lineas %}
-        <div class="ticket-linea">
+        <div class="ticket-linea" data-indice="{{ forloop.counter0 }}" tabindex="0">
           <span>{{ l.nombre }} × {% if l.por_peso %}{{ l.cantidad|floatformat:3 }}{% else %}{{ l.cantidad }}{% endif %}</span>
           <span class="ticket-derecha">
             <strong>Bs {{ l.subtotal }}</strong>
@@ -77,8 +58,29 @@
       {% endfor %}
     </div>
   </div>
-</div>
 
+  <!-- BARRA INFERIOR SIEMPRE FIJA: totales + botones gigantes -->
+  <div class="pos-bottombar">
+    <div class="pos-totales">
+      <span class="badge badge-azul" style="font-size:1rem;padding:6px 14px">{{ total_items }} producto{{ total_items|pluralize:"s" }}</span>
+      <div class="pos-total-mini"><span>Base imponible</span><strong>Bs {{ base_imponible }}</strong></div>
+      <div class="pos-total-mini"><span>IVA 16% incluido</span><strong>Bs {{ iva_incluido }}</strong></div>
+      <div class="ticket-total" style="padding:0">TOTAL: Bs {{ total }}</div>
+    </div>
+    <div class="pos-botones">
+      <form method="post" data-finalizar style="flex:1">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="pagar">
+        <button class="btn btn-verde btn-gigante" type="submit">Pasar a pagar (F10)</button>
+      </form>
+      <form method="post" style="flex:1">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="vaciar">
+        <button class="btn btn-rojo btn-gigante" type="submit">Vaciar ticket (Ctrl+Z)</button>
+      </form>
+    </div>
+  </div>
+</div>
 
 {% if modal_cliente %}
 <div class="modal-fondo">

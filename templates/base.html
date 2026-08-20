@@ -6,8 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Facturación{% endblock %}</title>
 <link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=18">
+  <link rel="stylesheet" href="{% static 'css/pos2.css' %}?v=5">
 </head>
-<body{% if user.is_authenticated %} class="con-barra"{% endif %}>
+<body class="{% if user.is_authenticated %}con-barra {% endif %}{% if title == 'Nueva venta (POS)' %}pos-page{% endif %}">
 {% if user.is_authenticated %}
 <header class="topbar">
   <div class="topbar-int">
@@ -76,6 +77,7 @@ const RUTAS = {
 };
 </script>
 <script src="{% static 'js/atajos.js' %}?v=18"></script>
+<script src="{% static 'js/pos.js' %}" defer></script>
 {% endif %}
 </body>
 </html>

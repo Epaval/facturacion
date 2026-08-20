@@ -221,3 +221,35 @@ tbody td { font-size: 1.1rem; padding: 13px 16px; }
   border-top-color: #fff; border-radius: 50%; animation: girar .8s linear infinite; }
 @keyframes girar { to { transform: rotate(360deg); } }
 @media print { #overlay-accion { display: none !important; } }
+
+
+/* ===== POS: layout 100vh sin scroll de página ===== */
+body.pos-page { overflow: hidden; height: 100vh; }
+body.pos-page .contenido { height: calc(100vh - 70px); padding: 12px 20px; overflow: hidden; }
+.pos-fullscreen { display: grid; grid-template-columns: 1fr 420px; gap: 16px; height: 100%; overflow: hidden; }
+.pos-fullscreen .panel { display: flex; flex-direction: column; overflow: hidden; }
+.pos-fullscreen .panel:first-child { overflow-y: auto; }
+.ticket-container { display: flex; flex-direction: column; height: 100%; }
+.ticket-fijo { flex-shrink: 0; }
+.ticket-scroll { flex: 1; overflow-y: auto; padding-right: 4px; }
+.ticket-scroll .ticket-linea { padding: 8px 10px; border-radius: 6px; transition: background .15s; }
+.ticket-scroll .ticket-linea.seleccionada { background: #e0f2fe; border: 2px solid #0ea5e9; }
+.ticket-scroll .ticket-linea:hover { background: #f8fafc; }
+
+
+/* ===== POS v2: pantalla completa + barra inferior fija ===== */
+body.pos-page { overflow: hidden; height: 100vh; }
+.pos-fullscreen { display: grid; grid-template-columns: 1fr 440px; grid-template-rows: 1fr auto;
+  gap: 14px; overflow: hidden; }
+.pos-left, .pos-right { display: flex; flex-direction: column; overflow: hidden; }
+.pos-left { overflow-y: auto; }
+.pos-right .ticket-scroll { flex: 1; overflow-y: auto; max-height: none; padding-right: 4px; }
+.pos-bottombar { grid-column: 1 / -1; display: flex; align-items: center; gap: 20px;
+  background: #fff; border: 1px solid var(--borde); border-radius: 12px; padding: 12px 16px; }
+.pos-totales { display: flex; align-items: center; gap: 18px; flex: 1; flex-wrap: wrap; }
+.pos-total-mini { font-size: .95rem; }
+.pos-total-mini span { display: block; color: #64748b; font-size: .8rem; }
+.pos-botones { display: flex; gap: 12px; flex: 1.3; }
+.btn-gigante { width: 100%; padding: 18px 10px; font-size: 1.4rem; font-weight: 800; }
+.ticket-scroll .ticket-linea { padding: 8px 10px; border-radius: 6px; }
+.ticket-scroll .ticket-linea.seleccionada { background: #e0f2fe; outline: 2px solid #0ea5e9; }
