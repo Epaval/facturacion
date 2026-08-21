@@ -6,7 +6,7 @@ class ConfigNegocioForm(forms.ModelForm):
     class Meta:
         model = ConfigNegocio
         fields = ["nombre", "rif", "nit", "direccion", "telefono",
-                  "serial_impresora_fiscal", "logo", "notas_factura"]
+                  "serial_impresora_fiscal", "logo", "notas_factura", "tasa_dolar"]
         widgets = {
             "direccion": forms.Textarea(attrs={"rows": 2}),
             "notas_factura": forms.Textarea(attrs={"rows": 2}),

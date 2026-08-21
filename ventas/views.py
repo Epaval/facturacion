@@ -13,6 +13,7 @@ from django.views.generic import DetailView, ListView
 from clientes.models import Cliente
 from productos.models import Producto
 
+from core.moneda import precio_bs as precio_bs_producto
 from .models import Caja, Pago, Venta
  
 
@@ -55,23 +56,24 @@ class POSView(LoginRequiredMixin, View):
 
     @staticmethod
     def _agregar(lineas, producto, cantidad):
+        pb = precio_bs_producto(producto)
         en_ticket = sum(Decimal(l["cantidad"]) for l in lineas if l["producto_id"] == producto.id)
         if producto.stock < en_ticket + cantidad:
             return f"Stock insuficiente de {producto.nombre}"
         for l in lineas:
             if l["producto_id"] == producto.id:
                 l["cantidad"] = str(Decimal(l["cantidad"]) + cantidad)
-                l["subtotal"] = str((Decimal(l["subtotal"]) + cantidad * producto.precio_venta).quantize(Decimal("0.01")))
+                l["subtotal"] = str((Decimal(l["subtotal"]) + cantidad * pb).quantize(Decimal("0.01")))
                 break
         else:
             lineas.append({
                 "producto_id": producto.id,
                 "nombre": producto.nombre,
                 "cantidad": str(cantidad),
-                "precio": str(producto.precio_venta),
+                "precio": str(pb),
                 "por_peso": producto.por_peso,
                 "unidad": producto.unidad,
-                "subtotal": str((cantidad * producto.precio_venta).quantize(Decimal("0.01"))),
+                "subtotal": str((cantidad * pb).quantize(Decimal("0.01"))),
             })
         return None
 

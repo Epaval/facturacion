@@ -1,3 +1,4 @@
+{% load moneda %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -49,7 +50,7 @@
   <tr><td class="der">Subtotal:</td><td class="der">Bs {{ venta.subtotal }}</td></tr>
   <tr><td class="der">Base imponible:</td><td class="der">Bs {{ venta.base_imponible }}</td></tr>
   <tr><td class="der">IVA 16%:</td><td class="der">Bs {{ venta.monto_iva }}</td></tr>
-  <tr><td class="der tot">TOTAL:</td><td class="der tot">Bs {{ venta.total }}</td></tr>
+  <tr><td class="der tot">TOTAL:</td><td class="der tot">Bs {{ venta.total }} <span style="background:#e2e8f0;color:#334155;border-radius:99px;padding:2px 10px;font-size:.85em">$ {{ venta.total|usd }}</span></td></tr>
   <tr><td class="der">Pagado ({{ venta.get_metodo_pago_display }}):</td><td class="der">Bs {{ venta.monto_recibido }}</td></tr>
   {% if venta.cambio > 0 %}<tr><td class="der">Vuelto:</td><td class="der">Bs {{ venta.cambio }}</td></tr>{% endif %}
 </table>

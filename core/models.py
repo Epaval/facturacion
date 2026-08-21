@@ -52,6 +52,10 @@ class ConfigNegocio(models.Model):
         "Notas al pie de la factura", blank=True,
         help_text="Ej: Gracias por su compra · Conserve este documento"
     )
+    tasa_dolar = models.DecimalField(
+        "Tasa del dólar (Bs por $)", max_digits=12, decimal_places=2,
+        default=1, help_text="Actualiza a diario. Todos los precios se venden en Bs = $ x tasa."
+    )
 
     class Meta:
         verbose_name = "Configuración del negocio"
@@ -59,6 +63,8 @@ class ConfigNegocio(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1
         super().save(*args, **kwargs)
+        from core import moneda
+        moneda.invalidar_tasa()
 
     @classmethod
     def get(cls):
