@@ -10,4 +10,8 @@ urlpatterns = [
     path("nuevo/", views.ProductoCreateView.as_view(), name="create"),
     path("<int:pk>/editar/", views.ProductoUpdateView.as_view(), name="update"),
     path("buscar-global/", views.buscar_global, name="buscar_global"),
+    path("kardex/", views.kardex, name="kardex"),
+    path("ajuste/", views.ajuste_stock, name="ajuste_stock"),
+    path("conteo/", views.conteo_fisico, name="conteo"),
+    path("stock-negativo/", views.stock_negativo, name="stock_negativo"),
 ]

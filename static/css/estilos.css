@@ -253,3 +253,23 @@ body.pos-page { overflow: hidden; height: 100vh; }
 .btn-gigante { width: 100%; padding: 18px 10px; font-size: 1.4rem; font-weight: 800; }
 .ticket-scroll .ticket-linea { padding: 8px 10px; border-radius: 6px; }
 .ticket-scroll .ticket-linea.seleccionada { background: #e0f2fe; outline: 2px solid #0ea5e9; }
+
+/* ===== Sidebar v0.3.2 ===== */
+.sidebar{position:fixed;top:0;left:0;bottom:0;width:230px;background:#0f172a;color:#e2e8f0;padding:118px 0 12px;overflow-y:auto;z-index:900;transition:transform .25s ease}
+.sidebar a{display:block;padding:9px 18px;color:#cbd5e1;text-decoration:none;font-size:.95rem;border-left:3px solid transparent}
+.sidebar a:hover{background:#1e293b;color:#fff}
+.sidebar a.activo{background:#1e293b;color:#fff;border-left-color:#0ea5e9}
+.sb-seccion{padding:14px 18px 4px;font-size:.7rem;letter-spacing:.08em;text-transform:uppercase;color:#64748b;font-weight:700}
+.sb-pie{margin-top:18px;padding:12px 18px;border-top:1px solid #1e293b;display:flex;justify-content:space-between;align-items:center;font-size:.9rem}
+.sb-pie form button{background:none;border:1px solid #7f1d1d;color:#fca5a5;border-radius:6px;padding:4px 10px;cursor:pointer}
+body.con-sidebar .contenido{margin-left:230px}
+body.sb-oculto .sidebar{transform:translateX(-100%)}
+body.sb-oculto.con-sidebar .contenido{margin-left:0}
+.sb-toggle{background:none;border:none;color:#fff;font-size:1.3rem;cursor:pointer;margin-right:8px}
+.tasa-top{margin-left:auto;background:#1e293b;color:#fff;padding:4px 12px;border-radius:99px;font-size:.85rem;font-weight:700}
+.topbar .usuario{margin-left:auto}
+@media (max-width:900px){body.con-sidebar .contenido{margin-left:0}.sidebar{transform:translateX(-100%)}body:not(.sb-oculto) .sidebar{transform:none}}
+
+/* ===== Ajustes v0.3.2 ===== */
+.barra-teclas{background:#0f172a !important}
+.sb-toggle{color:#0f172a !important;font-size:1.45rem !important;line-height:1;padding:2px 8px}

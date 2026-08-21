@@ -1,39 +1,59 @@
 {% load static %}
+{% load moneda %}
 <!DOCTYPE html>
 <html lang="es">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>{% block title %}Facturación{% endblock %}</title>
-<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=18">
+<link rel="stylesheet" href="{% static 'css/estilos.css' %}?v=20">
   <link rel="stylesheet" href="{% static 'css/pos2.css' %}?v=5">
 </head>
-<body class="{% if user.is_authenticated %}con-barra {% endif %}{% if title == 'Nueva venta (POS)' %}pos-page{% endif %}">
+<body class="{% if user.is_authenticated %}con-barra {% endif %}{% if title == 'Nueva venta (POS)' %}pos-page {% endif %}{% if user.is_authenticated and '/ventas/pos' not in request.path and '/ventas/pago' not in request.path %}con-sidebar{% endif %}">
 {% if user.is_authenticated %}
+{% if '/ventas/pos' not in request.path and '/ventas/pago' not in request.path %}
+<aside class="sidebar" id="sidebar">
+  <div class="sb-seccion">Operación</div>
+  <a href="{% url 'ventas:pos' %}">🛒 Nueva venta</a>
+  <a href="{% url 'ventas:list' %}">🧾 Ventas</a>
+  <a href="{% url 'ventas:caja' %}">💰 Caja</a>
+  <a href="{% url 'ventas:caja_list' %}">📚 Historial cajas</a>
+  <a href="{% url 'ventas:notas_credito_list' %}">↩️ Notas de crédito</a>
+  {% if user.es_admin %}
+  <div class="sb-seccion">Inventario</div>
+  <a href="{% url 'productos:list' %}">📦 Productos</a>
+  <a href="/productos/kardex/">📒 Kardex</a>
+  <a href="/productos/conteo/">🔢 Conteo</a>
+  <a href="/productos/stock-negativo/">⚠️ Stock negativo</a>
+  <div class="sb-seccion">Fiscal</div>
+  <a href="{% url 'ventas:libro_ventas' %}">📖 Libro de ventas</a>
+  <a href="{% url 'ventas:reporte_fiscal' %}">🏛️ Reporte fiscal</a>
+  <div class="sb-seccion">Administración</div>
+  <a href="{% url 'accounts:usuarios' %}">👥 Usuarios</a>
+  {% endif %}
+  <a href="{% url 'clientes:list' %}">🙍 Clientes</a>
+  {% if user.es_admin %}
+  <a href="{% url 'config_negocio' %}">🏢 Datos del negocio</a>
+  {% if request.user.is_superuser %}<a href="{% url 'impresoras' %}">🖨️ Impresoras</a>{% endif %}
+  {% endif %}
+  <div class="sb-pie">
+    <span>{{ user.full_name }}</span>
+    <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit">Salir</button></form>
+  </div>
+</aside>
+{% endif %}
 <header class="topbar">
   <div class="topbar-int">
+    {% if '/ventas/pos' not in request.path and '/ventas/pago' not in request.path %}<button id="sb-toggle" class="sb-toggle" title="Mostrar/ocultar menú">☰</button>{% endif %}
     <a class="marca" href="{% url 'dashboard' %}">■ Facturación</a>
-    <nav class="nav-links">
-      <a href="{% url 'ventas:pos' %}">Nueva venta</a>
-      <a href="{% url 'ventas:list' %}">Ventas</a>
-      <a href="{% url 'ventas:notas_credito_list' %}">Notas de crédito</a>
-      {% if user.es_admin %}<a href="{% url 'ventas:libro_ventas' %}">Libro de ventas</a>
-      <a href="{% url 'ventas:reporte_fiscal' %}">Reporte fiscal</a>{% endif %}
-      {% if user.es_admin %}<a href="{% url 'productos:list' %}">Productos</a>
-      <a href="{% url 'accounts:usuarios' %}">Usuarios</a>
-      <a href="{% url 'config_negocio' %}">Datos del negocio</a>
-      {% if request.user.is_superuser %}<a href="{% url 'impresoras' %}">Impresoras</a>{% endif %}{% endif %}
-      <a href="{% url 'clientes:list' %}">Clientes</a>
-      <a href="{% url 'ventas:caja' %}">Caja</a>
-      <a href="{% url 'ventas:caja_list' %}">Historial cajas</a>
-    </nav>
+    {% if '/ventas/pos' in request.path or '/ventas/pago' in request.path %}
     <div class="usuario">
       <span>{{ user.full_name }}</span>
-      <form method="post" action="{% url 'accounts:logout' %}">
-        {% csrf_token %}
-        <button type="submit">Salir</button>
-      </form>
+      <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit">Salir</button></form>
     </div>
+    {% else %}
+    <span class="tasa-top">💵 Bs {{ 1|bs }} / $</span>
+    {% endif %}
   </div>
 </header>
 {% endif %}
@@ -174,6 +194,21 @@ const RUTAS = {
     else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopImmediatePropagation(); if (lista.length) { sel = sel <= 0 ? lista.length - 1 : sel - 1; pintar(); } }
     else if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); enter(); }
   }, true);
+})();
+</script>
+
+<script>
+(function () {
+  var b = document.body;
+  if (localStorage.getItem('sb-oculto') === '1') b.classList.add('sb-oculto');
+  var t = document.getElementById('sb-toggle');
+  if (t) t.addEventListener('click', function () {
+    b.classList.toggle('sb-oculto');
+    localStorage.setItem('sb-oculto', b.classList.contains('sb-oculto') ? '1' : '0');
+  });
+  document.querySelectorAll('.sidebar a').forEach(function (a) {
+    if (a.pathname === location.pathname) a.classList.add('activo');
+  });
 })();
 </script>
 </body>

@@ -1,3 +1,5 @@
+from django.http import Http404
+from django.shortcuts import render, redirect
 import csv
 import io
 import logging
@@ -13,7 +15,7 @@ from django.contrib.messages.views import SuccessMessageMixin
 from django.db.models import Q
 
 from .forms import ProductoForm
-from .models import Categoria, Producto
+from .models import MovimientoStock, Categoria, Producto
 
 # Configurar logger
 logger = logging.getLogger(__name__)
@@ -275,3 +277,113 @@ def buscar_global(request):
             "categoria": str(getattr(p, "categoria", "") or ""),
         })
     return _JsonResponse({"productos": data})
+
+
+# --- imports kardex/ajuste ---
+from django.contrib.auth.decorators import login_required
+from django.db.models import Q
+from django.contrib import messages
+from django.http import Http404
+from django.shortcuts import render, redirect
+
+
+@login_required
+def kardex(request):
+    if not (getattr(request.user, "rol", "") == "admin" or request.user.is_superuser):
+        raise Http404()
+    qs = MovimientoStock.objects.select_related("producto", "usuario")
+    q = (request.GET.get("q") or "").strip()
+    tipo = request.GET.get("tipo") or ""
+    desde = request.GET.get("desde") or ""
+    hasta = request.GET.get("hasta") or ""
+    if q:
+        qs = qs.filter(Q(producto__nombre__icontains=q) | Q(producto__codigo_barras__icontains=q))
+    if tipo:
+        qs = qs.filter(tipo=tipo)
+    if desde:
+        qs = qs.filter(fecha__date__gte=desde)
+    if hasta:
+        qs = qs.filter(fecha__date__lte=hasta)
+    from django.core.paginator import Paginator
+    pag = Paginator(qs, 6)
+    movs = pag.get_page(request.GET.get("page"))
+    return render(request, "productos/kardex.html", {
+        "movs": movs, "q": q, "tipo": tipo, "desde": desde, "hasta": hasta,
+        "tipos": MovimientoStock.TIPOS,
+        "productos": Producto.objects.filter(activo=True).order_by("nombre"),
+    })
+
+
+@login_required
+def ajuste_stock(request):
+    if not (getattr(request.user, "rol", "") == "admin" or request.user.is_superuser):
+        raise Http404()
+    if request.method == "POST":
+        from decimal import Decimal, InvalidOperation
+        from django.db import transaction
+        try:
+            producto = Producto.objects.get(pk=int(request.POST.get("producto")))
+            cantidad = abs(Decimal(request.POST.get("cantidad", "0").replace(",", ".")))
+        except (Producto.DoesNotExist, ValueError, InvalidOperation):
+            messages.error(request, "Producto o cantidad inválida")
+            return redirect("productos:kardex")
+        signo = request.POST.get("signo", "+")
+        delta = cantidad if signo == "+" else -cantidad
+        motivo = (request.POST.get("motivo") or "").strip() or "Ajuste manual"
+        with transaction.atomic():
+            p = Producto.objects.select_for_update().get(pk=producto.pk)
+            p.stock += delta
+            p.save()
+            MovimientoStock.objects.create(
+                producto=p, tipo="ajuste_pos" if delta >= 0 else "ajuste_neg",
+                cantidad=delta, stock_resultante=p.stock,
+                motivo=motivo, usuario=request.user,
+            )
+        messages.success(request, f"Stock de {p.nombre} ajustado a {p.stock}")
+    return redirect("productos:kardex")
+
+
+@login_required
+def conteo_fisico(request):
+    if not (getattr(request.user, "rol", "") == "admin" or request.user.is_superuser):
+        raise Http404()
+    if request.method == "POST":
+        from decimal import Decimal, InvalidOperation
+        from django.db import transaction
+        n = 0
+        with transaction.atomic():
+            for key, val in request.POST.items():
+                if not key.startswith("conteo_"):
+                    continue
+                pid = int(key.split("_")[1])
+                try:
+                    contado = Decimal((val or "0").replace(",", "."))
+                except InvalidOperation:
+                    continue
+                p = Producto.objects.select_for_update().get(pk=pid)
+                dif = contado - p.stock
+                if dif != 0:
+                    p.stock = contado
+                    p.save()
+                    MovimientoStock.objects.create(
+                        producto=p, tipo="conteo", cantidad=dif,
+                        stock_resultante=p.stock,
+                        motivo="Conteo físico", usuario=request.user,
+                    )
+                    n += 1
+        messages.success(request, f"Conteo aplicado: {n} producto(s) ajustado(s)")
+        return redirect("productos:kardex")
+    from django.core.paginator import Paginator
+    qs = Producto.objects.filter(activo=True).order_by("nombre")
+    pag = Paginator(qs, 6)
+    items = pag.get_page(request.GET.get("page"))
+    return render(request, "productos/conteo.html", {"items": items})
+
+
+@login_required
+def stock_negativo(request):
+    if not (getattr(request.user, "rol", "") == "admin" or request.user.is_superuser):
+        raise Http404()
+    return render(request, "productos/stock_negativo.html", {
+        "prods": Producto.objects.filter(stock__lt=0).order_by("stock"),
+    })

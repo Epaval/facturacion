@@ -11,7 +11,7 @@ from django.views import View
 from django.views.generic import DetailView, ListView
 
 from clientes.models import Cliente
-from productos.models import Producto
+from productos.models import Producto, MovimientoStock
 
 from core.moneda import precio_bs as precio_bs_producto
 from .models import Caja, Pago, Venta
@@ -356,6 +356,13 @@ class PagoView(LoginRequiredMixin, View):
                     )
                     Producto.objects.filter(pk=producto.pk).update(stock=F("stock") - Decimal(l["cantidad"]))
                     producto.refresh_from_db()
+                    MovimientoStock.objects.create(
+                        producto=producto, tipo="venta",
+                        cantidad=-Decimal(l["cantidad"]),
+                        stock_resultante=producto.stock,
+                        motivo=f"Venta #{venta.numero}",
+                        usuario=request.user, venta=venta,
+                    )
                     if producto.stock < 0:
                         messages.warning(request, f"⚠️ Stock de {producto.nombre} quedó en {producto.stock}. Venta permitida: notifica al administrador para revisar el inventario.")
                 for p in pagos:

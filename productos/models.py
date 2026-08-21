@@ -1,3 +1,4 @@
+from django.conf import settings
 from django.db import models
 
 
@@ -44,3 +45,29 @@ class Producto(models.Model):
 
     def __str__(self):
         return self.nombre
+
+
+class MovimientoStock(models.Model):
+    """Kardex: todo movimiento de inventario queda auditado."""
+    TIPOS = [
+        ("venta", "Venta"),
+        ("compra", "Compra/Entrada"),
+        ("ajuste_pos", "Ajuste +"),
+        ("ajuste_neg", "Ajuste -"),
+        ("conteo", "Conteo fisico"),
+        ("inicial", "Stock inicial"),
+    ]
+    producto = models.ForeignKey(Producto, on_delete=models.CASCADE, related_name="movimientos")
+    tipo = models.CharField(max_length=12, choices=TIPOS)
+    cantidad = models.DecimalField(max_digits=12, decimal_places=3)
+    stock_resultante = models.DecimalField(max_digits=12, decimal_places=3, null=True, blank=True)
+    motivo = models.CharField(max_length=200, blank=True)
+    usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="movimientos_stock")
+    venta = models.ForeignKey("ventas.Venta", null=True, blank=True, on_delete=models.SET_NULL, related_name="movimientos_stock")
+    fecha = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-id"]
+
+    def __str__(self):
+        return f"{self.producto.nombre} {self.tipo} {self.cantidad}"

@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>Stock negativo por regularizar</h1>
+<p class="subtitulo">Ventas permitidas sin stock que quedaron en negativo. Regulariza con un ajuste o conteo.</p>
+<table style="width:100%;border-collapse:collapse">
+  <thead><tr><th>Producto</th><th>Stock</th><th>Mínimo</th><th>Acción</th></tr></thead>
+  <tbody>
+  {% for p in prods %}
+    <tr>
+      <td>{{ p.nombre }}</td>
+      <td style="color:#b91c1c;font-weight:700">{{ p.stock }}</td>
+      <td>{{ p.stock_minimo }}</td>
+      <td><a class="btn btn-azul" href="/productos/kardex/">Ir a ajustar</a></td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="4">Sin stock negativo. ✅</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

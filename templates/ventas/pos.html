@@ -18,7 +18,7 @@
           <td>{{ p.codigo_barras|default:"—" }}</td>
           <td>{{ p.nombre }} {% if p.grava_iva %}<span class="badge badge-azul">IVA</span>{% endif %}</td>
           <td>Bs {{ p.precio_venta|bs }}</td>
-          <td>{% if p.stock_bajo %}<span class="badge badge-rojo">{{ p.stock }}</span>{% else %}{{ p.stock }}{% endif %}</td>
+          <td>{% if p.stock <= 0 %}<span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:99px">{{ p.stock }}</span>{% elif p.stock <= p.stock_minimo %}<span style="background:#fef9c3;color:#a16207;padding:2px 8px;border-radius:99px">{{ p.stock }} ⚠</span>{% else %}{{ p.stock }}{% endif %}</td>
           <td>
             <form method="post" class="fila-agregar" onclick="event.stopPropagation()">
               {% csrf_token %}
