@@ -45,4 +45,12 @@
     </div>
   </div>
 {% endif %}
+<script id="foco-cerrar-caja">
+document.addEventListener('DOMContentLoaded', function () {
+  var els = document.querySelectorAll('a, button');
+  for (var i = 0; i < els.length; i++) {
+    if (els[i].textContent.indexOf('Cerrar caja y contar efectivo') >= 0) { els[i].focus(); break; }
+  }
+});
+</script>
 {% endblock %}

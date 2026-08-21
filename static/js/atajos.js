@@ -152,3 +152,14 @@ document.addEventListener("keydown", function (e) {
   e.preventDefault();
   vaciar.closest("form").submit();
 });
+
+// ===== Ctrl+F12: cerrar sesión =====
+document.addEventListener('keydown', function (e) {
+  if (e.ctrlKey && e.key === 'F12') {
+    e.preventDefault();
+    var btns = document.querySelectorAll('button[type="submit"]');
+    for (var i = 0; i < btns.length; i++) {
+      if (btns[i].textContent.trim() === 'Salir') { btns[i].closest('form').submit(); return; }
+    }
+  }
+});

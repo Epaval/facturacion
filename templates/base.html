@@ -67,6 +67,7 @@
   <span><kbd>F9</kbd>Confirmar cobro</span>
   <span><kbd>F10</kbd>Pasar a pagar</span>
   <span><kbd>Esc</kbd>Volver</span>
+    <span><kbd>Ctrl+F12</kbd>Salir</span>
   {% endblock %}
 </footer>
 <script>
@@ -79,7 +80,7 @@ const RUTAS = {
   nuevo_producto: "{% if user.es_admin %}{% url 'productos:create' %}{% endif %}",
 };
 </script>
-<script src="{% static 'js/atajos.js' %}?v=18"></script>
+<script src="{% static 'js/atajos.js' %}?v=9"></script>
 <script src="{% static 'js/pos.js' %}?v=4" defer></script>
 {% endif %}
 
