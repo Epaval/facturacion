@@ -57,9 +57,6 @@ class POSView(LoginRequiredMixin, View):
     @staticmethod
     def _agregar(lineas, producto, cantidad):
         pb = precio_bs_producto(producto)
-        en_ticket = sum(Decimal(l["cantidad"]) for l in lineas if l["producto_id"] == producto.id)
-        if producto.stock < en_ticket + cantidad:
-            return f"Stock insuficiente de {producto.nombre}"
         for l in lineas:
             if l["producto_id"] == producto.id:
                 l["cantidad"] = str(Decimal(l["cantidad"]) + cantidad)
@@ -120,6 +117,8 @@ class POSView(LoginRequiredMixin, View):
                 if error:
                     messages.error(request, error)
                 else:
+                    if producto.stock <= 0:
+                        messages.warning(request, f"⚠️ Stock de {producto.nombre} en {producto.stock}. Venta permitida: notifica al administrador para revisar el inventario.")
                     request.session["pos_lineas"] = lineas
                     messages.success(request, f"{producto.nombre} agregado al ticket")
             return redirect("ventas:pos")
@@ -355,11 +354,10 @@ class PagoView(LoginRequiredMixin, View):
                         cantidad=Decimal(l["cantidad"]),
                         precio_unitario=Decimal(l["precio"]),
                     )
-                    ok_stock = Producto.objects.filter(pk=producto.pk, stock__gte=Decimal(l["cantidad"])).update(stock=F("stock") - Decimal(l["cantidad"]))
-                    if not ok_stock:
-                        messages.error(request, f"Stock insuficiente de {producto.nombre}")
-                        return redirect("ventas:pos")
+                    Producto.objects.filter(pk=producto.pk).update(stock=F("stock") - Decimal(l["cantidad"]))
                     producto.refresh_from_db()
+                    if producto.stock < 0:
+                        messages.warning(request, f"⚠️ Stock de {producto.nombre} quedó en {producto.stock}. Venta permitida: notifica al administrador para revisar el inventario.")
                 for p in pagos:
                     venta.pagos.create(metodo=p["metodo"], monto=Decimal(p["monto"]))
 

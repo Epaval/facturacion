@@ -36,6 +36,7 @@ def resumen_caja(caja):
     if caja.fecha_cierre:
         notas = notas.filter(fecha__lte=caja.fecha_cierre)
     total_notas = (notas.aggregate(s=Sum("total"))["s"] or Decimal("0.00")).quantize(dos)
+    por_metodo = [{"metodo": p["metodo"], "s": Decimal(str(p["s"] or 0)).quantize(Decimal("0.01"))} for p in por_metodo]
 
     return {
         "total_vendido": total_vendido,
