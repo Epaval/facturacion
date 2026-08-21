@@ -4,7 +4,7 @@ from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db import transaction
-from django.db.models import Q
+from django.db.models import F, Q
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views import View
@@ -355,8 +355,11 @@ class PagoView(LoginRequiredMixin, View):
                         cantidad=Decimal(l["cantidad"]),
                         precio_unitario=Decimal(l["precio"]),
                     )
-                    producto.stock -= Decimal(l["cantidad"])
-                    producto.save()
+                    ok_stock = Producto.objects.filter(pk=producto.pk, stock__gte=Decimal(l["cantidad"])).update(stock=F("stock") - Decimal(l["cantidad"]))
+                    if not ok_stock:
+                        messages.error(request, f"Stock insuficiente de {producto.nombre}")
+                        return redirect("ventas:pos")
+                    producto.refresh_from_db()
                 for p in pagos:
                     venta.pagos.create(metodo=p["metodo"], monto=Decimal(p["monto"]))
 

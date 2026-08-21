@@ -147,3 +147,5 @@ LOGGING = {
         },
     },
 }
+# Cajas facturando simultáneas: web=10, instalador offline pone 3
+MAX_CAJAS = int(os.environ.get("MAX_CAJAS", "10"))

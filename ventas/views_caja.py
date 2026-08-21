@@ -1,3 +1,4 @@
+from django.conf import settings
 import re
 from decimal import Decimal, InvalidOperation
 
@@ -82,6 +83,9 @@ class CajaView(LoginRequiredMixin, View):
             inicial = Decimal(request.POST.get("monto_inicial", "0").replace(",", ".") or "0")
         except InvalidOperation:
             inicial = Decimal("0")
+        if Caja.objects.filter(estado="abierta").count() >= settings.MAX_CAJAS:
+            messages.error(request, f"Límite de {settings.MAX_CAJAS} cajas simultáneas alcanzado. Cierra una caja para abrir otra.")
+            return redirect("ventas:caja")
         Caja.objects.create(usuario=request.user, monto_inicial=inicial, impresora=impresora)
         messages.success(request, "Caja abierta. ¡Buenas ventas!")
         return redirect("ventas:pos")

@@ -37,9 +37,19 @@ class Venta(models.Model):
         ordering = ["-numero"]
 
     def save(self, *args, **kwargs):
-        if not self.numero:
-            ultima = Venta.objects.aggregate(m=Max("numero"))["m"]
-            self.numero = (ultima or 0) + 1
+        if self.numero:
+            super().save(*args, **kwargs)
+            return
+        from django.db import IntegrityError, transaction
+        for _ in range(5):
+            try:
+                with transaction.atomic():
+                    ultima = Venta.objects.aggregate(m=Max("numero"))["m"]
+                    self.numero = (ultima or 0) + 1
+                    super().save(*args, **kwargs)
+                    return
+            except IntegrityError:
+                self.numero = None
         super().save(*args, **kwargs)
 
     def __str__(self):
