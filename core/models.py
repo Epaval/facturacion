@@ -1,3 +1,4 @@
+from decimal import Decimal
 from django.conf import settings
 from django.db import models
 from django.utils import timezone
@@ -61,6 +62,8 @@ class ConfigNegocio(models.Model):
         verbose_name = "Configuración del negocio"
 
     def save(self, *args, **kwargs):
+        if self.tasa_dolar is None:
+            self.tasa_dolar = Decimal("1")
         self.pk = 1
         super().save(*args, **kwargs)
         from core import moneda

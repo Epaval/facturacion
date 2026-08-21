@@ -3,6 +3,9 @@ from .models import ConfigNegocio
 
 
 class ConfigNegocioForm(forms.ModelForm):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields["tasa_dolar"].required = False
     class Meta:
         model = ConfigNegocio
         fields = ["nombre", "rif", "nit", "direccion", "telefono",
