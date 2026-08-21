@@ -60,7 +60,7 @@
 
 <div style="margin-top:14px;display:flex;gap:8px;align-items:center">
   {% if permitir_imprimir %}
-  <button class="btn btn-azul" type="button" onclick="imprimirConSpinner()">Imprimir (F8)</button>
+  <a class="btn btn-azul" target="_blank" href="{% url 'ventas:venta_print' venta.pk %}">Imprimir (F8)</a>
   {% else %}
   <span class="badge badge-azul">Factura emitida · solo consulta</span>
   {% endif %}
@@ -91,7 +91,7 @@ function imprimirConSpinner() {
   fetch("{% url 'ventas:marcar_impresa' venta.pk %}", {method:"POST", headers:{"X-CSRFToken": getCookie("csrftoken")}});
   if (window.mostrarOverlay) mostrarOverlay("Imprimiendo factura…");
   setTimeout(function () {
-    window.print();
+    window.open("{% url 'ventas:venta_print' venta.pk %}", "_blank");
     if (window.ocultarOverlay) ocultarOverlay();
   }, 900);
 }

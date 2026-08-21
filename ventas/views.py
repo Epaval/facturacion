@@ -415,3 +415,19 @@ class MarcarImpresaView(LoginRequiredMixin, View):
             venta.impresa = True
             venta.save(update_fields=["impresa"])
         return JsonResponse({"ok": True})
+
+
+class VentaPrintView(LoginRequiredMixin, DetailView):
+    """Ventana nueva de impresión de factura (marca como impresa)."""
+    model = Venta
+    template_name = "ventas/venta_print.html"
+    context_object_name = "venta"
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        from core.models import ConfigNegocio
+        ctx["config"] = ConfigNegocio.get()
+        if not self.object.impresa:
+            self.object.impresa = True
+            self.object.save(update_fields=["impresa"])
+        return ctx

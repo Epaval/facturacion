@@ -25,5 +25,6 @@ urlpatterns = [
     path("reporte-fiscal/imprimir/", views_reportes.ReporteFiscalPrintView.as_view(), name="reporte_fiscal_print"),
     path("", views.VentaListView.as_view(), name="list"),
     path("<int:pk>/marcar-impresa/", views.MarcarImpresaView.as_view(), name="marcar_impresa"),
+    path("<int:pk>/imprimir/", views.VentaPrintView.as_view(), name="venta_print"),
     path("<int:pk>/", views.VentaDetailView.as_view(), name="detail"),
 ]

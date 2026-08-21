@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Factura #{{ venta.numero|stringformat:"06d" }}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 13px; color: #111; margin: 24px auto; max-width: 720px; padding: 0 16px; }
+  h1 { font-size: 20px; margin: 0; }
+  .head { display: flex; justify-content: space-between; gap: 20px; }
+  .der { text-align: right; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { border-bottom: 1px solid #999; padding: 6px 8px; text-align: left; }
+  .tot { font-size: 16px; font-weight: bold; }
+  hr { border: none; border-top: 2px solid #111; margin: 10px 0; }
+  .btn { margin-top: 14px; padding: 10px 18px; font-size: 14px; cursor: pointer; }
+  @media print { .no-print { display: none; } }
+</style>
+</head>
+<body>
+<div class="head">
+  <div>
+    <h1>{{ config.nombre|default:"Mi Negocio" }}</h1>
+    <p style="margin:4px 0"><strong>RIF:</strong> {{ config.rif }}{% if config.nit %} · <strong>NIT:</strong> {{ config.nit }}{% endif %}</p>
+    {% if config.telefono %}<p style="margin:4px 0">Tel: {{ config.telefono }}</p>{% endif %}
+  </div>
+  <div class="der">
+    <h1>FACTURA</h1>
+    <p style="margin:4px 0"><strong>N°:</strong> {{ venta.numero|stringformat:"06d" }}</p>
+    <p style="margin:4px 0"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
+    {% if venta.serial_fiscal %}<p style="margin:4px 0"><strong>Serial fiscal (control):</strong><br>{{ venta.serial_fiscal }}</p>{% endif %}
+  </div>
+</div>
+<hr>
+<p><strong>Cliente:</strong> {% if venta.cliente %}{{ venta.cliente.full_name }} · CI/RIF: {{ venta.cliente.ci_nit|default:"—" }}{% else %}Consumidor final{% endif %}</p>
+<table>
+  <thead><tr><th>Producto</th><th class="der">Cantidad</th><th class="der">Precio</th><th class="der">Subtotal</th></tr></thead>
+  <tbody>
+  {% for d in venta.detalles.all %}
+  <tr>
+    <td>{{ d.producto.nombre }}</td>
+    <td class="der">{{ d.cantidad }} {{ d.producto.unidad }}</td>
+    <td class="der">Bs {{ d.precio_unitario }}</td>
+    <td class="der">Bs {{ d.subtotal }}</td>
+  </tr>
+  {% endfor %}
+  </tbody>
+</table>
+<table style="margin-top:10px">
+  <tr><td class="der">Subtotal:</td><td class="der">Bs {{ venta.subtotal }}</td></tr>
+  <tr><td class="der">Base imponible:</td><td class="der">Bs {{ venta.base_imponible }}</td></tr>
+  <tr><td class="der">IVA 16%:</td><td class="der">Bs {{ venta.monto_iva }}</td></tr>
+  <tr><td class="der tot">TOTAL:</td><td class="der tot">Bs {{ venta.total }}</td></tr>
+  <tr><td class="der">Pagado ({{ venta.get_metodo_pago_display }}):</td><td class="der">Bs {{ venta.monto_recibido }}</td></tr>
+  {% if venta.cambio > 0 %}<tr><td class="der">Vuelto:</td><td class="der">Bs {{ venta.cambio }}</td></tr>{% endif %}
+</table>
+<p style="text-align:center;margin-top:18px;color:#555">Factura generada por {{ venta.usuario.full_name }}</p>
+<button class="btn no-print" onclick="window.print()">🖨 Imprimir (Ctrl+P)</button>
+<script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 400); });</script>
+</body>
+</html>

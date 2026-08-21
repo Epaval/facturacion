@@ -41,7 +41,7 @@
     <h2 style="margin:0 0 8px">Ticket</h2>
     <div class="ticket-scroll ticket-lista">
       {% for l in lineas %}
-        <div class="ticket-linea" data-indice="{{ forloop.counter0 }}" tabindex="0">
+        <div data-cantidad="{{ l.cantidad }}" class="ticket-linea" data-indice="{{ forloop.counter0 }}" tabindex="0">
           <span>{{ l.nombre }} × {% if l.por_peso %}{{ l.cantidad|floatformat:3 }}{% else %}{{ l.cantidad }}{% endif %}</span>
           <span class="ticket-derecha">
             <strong>Bs {{ l.subtotal }}</strong>
@@ -109,7 +109,7 @@
     {% else %}
       <p class="subtitulo" style="margin-top:8px">Presiona Enter con el CI/RIF exacto para anexarlo.</p>
     {% endif %}
-    <a class="btn btn-borde" style="width:100%;margin-top:12px" href="{% url 'ventas:pos' %}">Cancelar (Esc)</a>
+    <a class="btn btn-borde" style="width:100%;margin-top:12px" href="{% url 'ventas:pos' %}" data-cancelar>Cancelar (Esc)</a>
   </div>
 </div>
 {% endif %}
@@ -130,7 +130,7 @@
       <input type="number" name="cantidad" step="0.001" min="0.001" placeholder="0.000" autofocus required>
       <div style="display:flex;gap:8px;margin-top:14px">
         <button class="btn btn-verde" type="submit" style="flex:1">Agregar al ticket (F8)</button>
-        <a class="btn btn-borde" href="{% url 'ventas:pos' %}">Cancelar (Esc)</a>
+        <a class="btn btn-borde" href="{% url 'ventas:pos' %}" data-cancelar>Cancelar (Esc)</a>
       </div>
     </form>
   </div>
@@ -139,4 +139,14 @@
 <style>
 .fila-seleccionada { background: #e0f2fe !important; outline: 2px solid #0ea5e9; }
 </style>
+<script id="cancelar-con-escape">
+(function () {
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape') {
+      var a = document.querySelector('a[data-cancelar]');
+      if (a) { e.preventDefault(); e.stopImmediatePropagation(); window.location.href = a.getAttribute('href'); }
+    }
+  }, true);
+})();
+</script>
 {% endblock %}

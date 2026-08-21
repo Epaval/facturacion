@@ -1,6 +1,27 @@
 {% extends "base.html" %}
 
 {% block content %}
+<style id="ocultar-topbar">
+header.topbar, .topbar, .topbar-int, nav.nav-links, .usuario { display: none !important; }
+.barra-teclas { position: static !important; margin-bottom: 0; }
+/* pago-grande */
+h1 { font-size: 2rem; }
+.panel { padding: 26px 30px; }
+.panel h2 { font-size: 1.5rem; }
+.panel p, .panel label, .subtitulo { font-size: 1.05rem; }
+.panel input, .panel select { font-size: 1.2rem; padding: 12px 14px; }
+.panel .btn { font-size: 1.1rem; padding: 12px 22px; }
+.panel table td, .panel table th { font-size: 1.05rem; }
+</style>
+<div id="fila-superior-pago" style="display:flex;justify-content:space-between;align-items:center;background:#fff;border-bottom:1px solid #e2e8f0;padding:8px 20px;margin-bottom:6px">
+  <a href="{% url 'dashboard' %}" style="font-weight:700;color:#1d4ed8;text-decoration:none;font-size:1.05rem">■ Facturación</a>
+  <span style="color:#334155">{{ user.full_name }}
+    <form style="display:inline;margin:0 0 0 12px" method="post" action="{% url 'accounts:logout' %}">
+        {% csrf_token %}
+        <button type="submit" style="background:none;border:none;color:#dc2626;font-weight:700;cursor:pointer;font-size:1rem;padding:0">Salir</button>
+      </form>
+  </span>
+</div>
 <h1>Cobro de venta</h1>
 <p class="subtitulo">Cliente obligatorio. La venta se confirma solo con pago igual o mayor al total; si es mayor se muestra el vuelto.</p>
 
@@ -66,7 +87,7 @@
     <form method="post" class="fila-agregar" style="margin-top:10px">
       {% csrf_token %}
       <input type="hidden" name="accion" value="agregar_pago">
-      <select name="metodo" style="width:auto">
+      <select name="metodo" style="width:auto" autofocus>
         <option value="efectivo">Efectivo</option>        
         <option value="punto_venta">Punto de venta</option>
         <option value="bio_pago">Bio Pago</option>
@@ -75,7 +96,7 @@
       <input type="number" name="monto" step="0.01" min="0.01" placeholder="Monto Bs" required style="width:120px">
       <button class="btn btn-azul" type="submit">Agregar pago</button>
     </form>
-    <p class="subtitulo" style="margin-top:8px">Puedes combinar varios pagos (efectivo + transferencia) hasta completar el total.</p>
+    <p class="subtitulo" style="margin-top:8px">Puedes combinar varios pagos (efectivo + transferencia) hasta completar el total.<br><span id="pagos-teclado" class="subtitulo">↑/↓ método · Enter → monto · Enter agrega · Tab: modo borrar (↑/↓ + Supr) · Tab/Esc sale</span></p>
   </div>
 
   <div class="panel">
@@ -109,7 +130,7 @@
   </div>
 </div>
 
-<div class="panel" style="margin-top:16px">
+<div style="display:none" data-resumen-oculto> class="panel" style="margin-top:16px">
   <h2>Resumen del ticket</h2>
   <table>
     <thead><tr><th>Producto</th><th>Cantidad</th><th>Subtotal</th></tr></thead>
@@ -125,4 +146,90 @@
   </table>
   <p style="text-align:right;margin-top:10px"><strong>Total productos: {{ total_items }}</strong></p>
 </div>
+<script id="subir-barra-teclas">
+document.addEventListener('DOMContentLoaded', function () {
+  var bar = document.querySelector('.barra-teclas');
+  if (bar) { bar.style.position = 'static'; document.body.insertBefore(bar, document.body.firstChild); }
+});
+</script>
+<style>
+.ticket-linea.seleccionada { background: #e0f2fe !important; outline: 2px solid #0ea5e9; }
+</style>
+<script id="pagos-teclado-js">
+(function () {
+  var sel = -1;
+  var modoBorrado = false;
+
+  function formas() {
+    return Array.prototype.slice.call(
+      document.querySelectorAll('input[name="accion"][value="quitar_pago"]')
+    ).map(function (i) { return i.form; });
+  }
+  function fila(f) { return f.closest('.ticket-linea') || f.closest('div'); }
+  function pintar() {
+    formas().forEach(function (f, i) { fila(f).classList.toggle('seleccionada', i === sel && modoBorrado); });
+  }
+  function montoInput() { return document.querySelector('input[name="monto"]'); }
+  function metodoSelect() { return document.querySelector('select[name="metodo"]'); }
+
+  function entrarBorrado() {
+    var fs = formas();
+    if (!fs.length) { var mi = montoInput(); if (mi) mi.focus(); return; }
+    modoBorrado = true; sel = 0; pintar();
+    if (document.activeElement && document.activeElement.blur) document.activeElement.blur();
+  }
+  function salirBorrado(destino) {
+    modoBorrado = false; sel = -1; pintar();
+    if (destino === 'monto') { var mi = montoInput(); if (mi) mi.focus(); }
+    else { var ms = metodoSelect(); if (ms) ms.focus(); }
+  }
+
+  document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('button[type="submit"]').forEach(function (b) {
+      if (b.textContent.trim().indexOf('Agregar pago') === 0) b.style.display = 'none';
+    });
+    var mi = montoInput();
+    if (mi) { mi.style.flex = '1'; mi.style.width = 'auto'; mi.style.maxWidth = 'none'; }
+    // Si hubo error de monto, el foco va directo al monto
+    var msgs = document.querySelector('.mensajes');
+    if (msgs && /monto/i.test(msgs.textContent)) { if (mi) mi.focus(); }
+  });
+
+  document.addEventListener('keydown', function (e) {
+    var active = document.activeElement;
+    var ms = metodoSelect(), mi = montoInput();
+
+    // ===== MODO BORRADO =====
+    if (modoBorrado) {
+      var fs = formas();
+      if (e.key === 'ArrowDown') { e.preventDefault(); sel = (sel + 1) % fs.length; pintar(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); sel = sel <= 0 ? fs.length - 1 : sel - 1; pintar(); }
+      else if (e.key === 'Delete') { e.preventDefault(); if (sel >= 0 && fs[sel]) fs[sel].submit(); }
+      else if (e.key === 'Tab') { e.preventDefault(); salirBorrado(e.shiftKey ? 'monto' : 'metodo'); }
+      else if (e.key === 'Escape') { e.preventDefault(); e.stopImmediatePropagation(); salirBorrado('metodo'); }
+      return;
+    }
+
+    // ===== MODO NORMAL =====
+    if (active === ms) {
+      if (e.key === 'Enter') { e.preventDefault(); if (mi) mi.focus(); }
+      else if (e.key === 'Tab') { e.preventDefault(); entrarBorrado(); }
+      return;
+    }
+    if (active === mi) {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        var v = parseFloat(mi.value.replace(',', '.'));
+        if (isNaN(v) || v <= 0) {
+          mi.style.borderColor = '#dc2626';
+          mi.focus();
+          return;
+        }
+        mi.form.submit();
+      }
+      else if (e.key === 'Tab') { e.preventDefault(); entrarBorrado(); }
+    }
+  });
+})();
+</script>
 {% endblock %}

@@ -9,4 +9,5 @@ urlpatterns = [
     path("buscar/", views.ProductoListView.as_view(), name="buscar"),
     path("nuevo/", views.ProductoCreateView.as_view(), name="create"),
     path("<int:pk>/editar/", views.ProductoUpdateView.as_view(), name="update"),
+    path("buscar-global/", views.buscar_global, name="buscar_global"),
 ]

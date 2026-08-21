@@ -248,3 +248,30 @@ class ProductoImportView(AdminRequiredMixin, TemplateView):
             messages.error(request, f"Error al procesar el archivo: {str(e)}")
         
         return redirect("productos:list")
+
+from django.contrib.auth.decorators import login_required as _login_required
+from django.http import JsonResponse as _JsonResponse
+from django.db.models import Q as _Q
+
+@_login_required
+def buscar_global(request):
+    """Buscador global: código exacto o descripción (JSON)."""
+    q = (request.GET.get("q") or "").strip()
+    if not q:
+        return _JsonResponse({"productos": []})
+    qs = Producto.objects.filter(activo=True).filter(
+        _Q(nombre__icontains=q) | _Q(codigo_barras__icontains=q)
+    )[:12]
+    data = []
+    for p in qs:
+        data.append({
+            "id": p.id,
+            "nombre": p.nombre,
+            "codigo": p.codigo_barras or "",
+            "precio": str(getattr(p, "precio_venta", "")),
+            "stock": str(p.stock),
+            "unidad": p.unidad or "",
+            "por_peso": bool(getattr(p, "por_peso", False)),
+            "categoria": str(getattr(p, "categoria", "") or ""),
+        })
+    return _JsonResponse({"productos": data})

@@ -80,7 +80,100 @@ const RUTAS = {
 };
 </script>
 <script src="{% static 'js/atajos.js' %}?v=18"></script>
-<script src="{% static 'js/pos.js' %}?v=3" defer></script>
+<script src="{% static 'js/pos.js' %}?v=4" defer></script>
 {% endif %}
+
+<div id="bg-modal" style="display:none;position:fixed;inset:0;background:rgba(15,23,42,.55);z-index:1200;align-items:flex-start;justify-content:center;padding-top:8vh">
+  <div style="background:#fff;border-radius:12px;width:640px;max-width:94%;max-height:80vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 50px rgba(0,0,0,.35)">
+    <div style="padding:14px 18px;border-bottom:1px solid #e2e8f0">
+      <input id="bg-q" type="text" placeholder="Escanea código o escribe descripción…" style="width:100%;font-size:1.15rem;padding:10px 14px">
+    </div>
+    <div id="bg-lista" style="overflow:auto"></div>
+    <div id="bg-detalle" style="overflow:auto;padding:16px 18px;display:none"></div>
+    <div style="padding:8px 18px;border-top:1px solid #e2e8f0;color:#64748b;font-size:.85rem">↑/↓ selecciona · Enter detalle · Esc vuelve/cierra · Ctrl+F abre</div>
+  </div>
+</div>
+<script>
+(function () {
+  var modal = document.getElementById('bg-modal');
+  if (!modal) return;
+  var q = document.getElementById('bg-q');
+  var listaEl = document.getElementById('bg-lista');
+  var detEl = document.getElementById('bg-detalle');
+  var abierto = false, sel = -1, lista = [], timer = null, enDetalle = false;
+
+  function abrir() {
+    abierto = true; modal.style.display = 'flex';
+    q.value = ''; lista = []; sel = -1; enDetalle = false;
+    detEl.style.display = 'none'; listaEl.style.display = 'block'; listaEl.innerHTML = '';
+    setTimeout(function () { q.focus(); }, 0);
+  }
+  function cerrar() { abierto = false; modal.style.display = 'none'; }
+
+  function fetchQ(term, cb) {
+    fetch('/productos/buscar-global/?q=' + encodeURIComponent(term))
+      .then(function (r) { return r.json(); })
+      .then(function (d) { cb(d.productos || []); });
+  }
+  function buscar() {
+    clearTimeout(timer);
+    var term = q.value.trim();
+    if (!term) { lista = []; sel = -1; listaEl.innerHTML = ''; return; }
+    timer = setTimeout(function () {
+      fetchQ(term, function (ps) { lista = ps; sel = lista.length ? 0 : -1; pintar(); });
+    }, 180);
+  }
+  function pintar() {
+    listaEl.innerHTML = lista.map(function (p, i) {
+      return '<div style="padding:10px 18px;display:flex;justify-content:space-between;gap:10px;' + (i === sel ? 'background:#e0f2fe;outline:2px solid #0ea5e9;' : '') + '">' +
+        '<span><strong>' + p.nombre + '</strong> <span style="color:#64748b">' + p.codigo + '</span></span>' +
+        '<span style="color:#64748b">Bs ' + p.precio + ' · ' + p.stock + ' ' + p.unidad + '</span></div>';
+    }).join('') || '<div style="padding:12px 18px;color:#64748b">Sin coincidencias.</div>';
+  }
+  function detalle(p) {
+    enDetalle = true;
+    listaEl.style.display = 'none';
+    detEl.style.display = 'block';
+    detEl.innerHTML = '<h2 style="margin:0 0 8px">' + p.nombre + (p.por_peso ? ' <span style="background:#fee2e2;color:#b91c1c;padding:2px 8px;border-radius:99px;font-size:.75rem">PESO</span>' : '') + '</h2>' +
+      '<p style="margin:4px 0"><strong>Código:</strong> ' + p.codigo + '</p>' +
+      '<p style="margin:4px 0"><strong>Categoría:</strong> ' + (p.categoria || '—') + '</p>' +
+      '<p style="margin:4px 0"><strong>Precio venta:</strong> Bs ' + p.precio + ' / ' + p.unidad + '</p>' +
+      '<p style="margin:4px 0"><strong>Stock:</strong> ' + p.stock + ' ' + p.unidad + '</p>';
+  }
+  function enter() {
+    var term = q.value.trim();
+    if (!term || enDetalle) return;
+    function decidir() {
+      var exacto = null;
+      for (var i = 0; i < lista.length; i++) if (lista[i].codigo === term) { exacto = lista[i]; break; }
+      var p = exacto || (sel >= 0 ? lista[sel] : (lista.length === 1 ? lista[0] : null));
+      if (p) detalle(p);
+    }
+    if (!lista.length) fetchQ(term, function (ps) { lista = ps; sel = lista.length ? 0 : -1; pintar(); decidir(); });
+    else decidir();
+  }
+
+  q.addEventListener('input', function () {
+    enDetalle = false; detEl.style.display = 'none'; listaEl.style.display = 'block'; buscar();
+  });
+
+  document.addEventListener('keydown', function (e) {
+    if ((e.ctrlKey || e.metaKey) && String(e.key).toLowerCase() === 'f') {
+      e.preventDefault(); e.stopImmediatePropagation(); abrir(); return;
+    }
+    if (!abierto) return;
+    if (e.key === 'Escape') {
+      e.preventDefault(); e.stopImmediatePropagation();
+      if (enDetalle) { enDetalle = false; detEl.style.display = 'none'; listaEl.style.display = 'block'; q.focus(); }
+      else cerrar();
+      return;
+    }
+    if (enDetalle) return;
+    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopImmediatePropagation(); if (lista.length) { sel = (sel + 1) % lista.length; pintar(); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopImmediatePropagation(); if (lista.length) { sel = sel <= 0 ? lista.length - 1 : sel - 1; pintar(); } }
+    else if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); enter(); }
+  }, true);
+})();
+</script>
 </body>
 </html>

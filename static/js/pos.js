@@ -11,9 +11,12 @@
   ajustarAltura();
 })();
 
-// ===== POS: navegación de líneas del ticket (↑/↓/Supr/+/-) =====
+// ===== POS: navegación y edición del ticket =====
 (function () {
   var sel = -1;
+  var buffer = '';
+  var bufferTimer = null;
+
   function lineas() {
     return document.querySelectorAll('.ticket-scroll .ticket-linea[data-indice], .ticket-lista .ticket-linea[data-indice]');
   }
@@ -36,15 +39,64 @@
     document.body.appendChild(f);
     f.submit();
   }
+  function badge() {
+    var b = document.getElementById('buffer-cantidad');
+    if (!b) {
+      b = document.createElement('div');
+      b.id = 'buffer-cantidad';
+      b.style.cssText = 'position:fixed;bottom:110px;right:24px;z-index:60;background:#0f172a;color:#fff;padding:10px 18px;border-radius:10px;font-size:1.1rem;font-weight:700;box-shadow:0 4px 14px rgba(0,0,0,.4);display:none';
+      document.body.appendChild(b);
+    }
+    return b;
+  }
+  function pintarBuffer() {
+    var b = badge();
+    if (buffer) {
+      var ls = lineas();
+      var nombre = (sel >= 0 && ls[sel]) ? ls[sel].querySelector('span').textContent.split('×')[0].trim() : '';
+      b.textContent = nombre + ' → nueva cantidad: ' + buffer;
+      b.style.display = 'block';
+    } else {
+      b.style.display = 'none';
+    }
+  }
+  function teclearBuffer(k) {
+    buffer += (k === ',') ? '.' : k;
+    clearTimeout(bufferTimer);
+    bufferTimer = setTimeout(function () { buffer = ''; pintarBuffer(); }, 3000);
+    pintarBuffer();
+  }
+  function confirmarBuffer() {
+    var ls = lineas();
+    if (sel < 0 || !ls[sel] || !buffer) return;
+    var nueva = parseFloat(buffer);
+    buffer = '';
+    pintarBuffer();
+    if (isNaN(nueva) || nueva <= 0) return;
+    var actual = parseFloat((ls[sel].getAttribute('data-cantidad') || '0').replace(',', '.'));
+    var delta = Math.round((nueva - actual) * 1000) / 1000;
+    if (delta !== 0) enviar(sel, 'cantidad', String(delta));
+  }
+
   document.addEventListener('keydown', function (e) {
     if (!document.querySelector('.pos-fullscreen')) return;
     if (['INPUT', 'TEXTAREA', 'SELECT'].includes(document.activeElement.tagName)) return;
-    if (e.key === 'ArrowUp') { e.preventDefault(); navegar('up'); }
-    else if (e.key === 'ArrowDown') { e.preventDefault(); navegar('down'); }
-    else if (e.key === 'Delete') { e.preventDefault(); if (sel >= 0) enviar(sel, 'quitar'); }
-    else if (e.key === '+' || e.key === '=') { e.preventDefault(); if (sel >= 0) enviar(sel, 'cantidad', '1'); }
-    else if (e.key === '-') { e.preventDefault(); if (sel >= 0) enviar(sel, 'cantidad', '-1'); }
+    var ls = lineas();
+
+    if (e.key === 'ArrowUp') { e.preventDefault(); navegar('up'); return; }
+    if (e.key === 'ArrowDown') { e.preventDefault(); navegar('down'); return; }
+    if (!ls.length || sel < 0) return;
+
+    if (e.key === 'Delete') { e.preventDefault(); buffer = ''; pintarBuffer(); enviar(sel, 'quitar'); return; }
+    if (e.key === '+' || e.key === '=' || e.code === 'NumpadAdd') { e.preventDefault(); enviar(sel, 'cantidad', '1'); return; }
+    if (e.key === '-' || e.code === 'NumpadSubtract' || e.code === 'Minus') { e.preventDefault(); enviar(sel, 'cantidad', '-1'); return; }
+
+    if (/^[0-9.,]$/.test(e.key)) { e.preventDefault(); teclearBuffer(e.key); return; }
+    if (e.key === 'Backspace' && buffer) { e.preventDefault(); buffer = buffer.slice(0, -1); pintarBuffer(); return; }
+    if (e.key === 'Enter' && buffer) { e.preventDefault(); confirmarBuffer(); return; }
+    if (e.key === 'Escape' && buffer) { e.preventDefault(); e.stopImmediatePropagation(); buffer = ''; pintarBuffer(); return; }
   });
+
   document.addEventListener('DOMContentLoaded', function () {
     var sc = document.querySelector('.ticket-scroll');
     if (sc) sc.scrollTop = sc.scrollHeight;
@@ -64,8 +116,6 @@
     filas().forEach(function (f, i) { f.classList.toggle('fila-seleccionada', i === selTabla); });
     if (selTabla >= 0 && filas()[selTabla]) filas()[selTabla].scrollIntoView({ block: 'nearest' });
   }
-
-  // Sincroniza selección si se toca un input de fila con el mouse
   document.addEventListener('focusin', function (e) {
     var tr = e.target.closest ? e.target.closest('tr') : null;
     if (tr && tr.querySelector('form.fila-agregar')) {
@@ -73,11 +123,10 @@
       if (idx >= 0) { selTabla = idx; pintar(); }
     }
   });
-
   document.addEventListener('keydown', function (e) {
     if (!document.querySelector('.pos-fullscreen')) return;
     var fl = filas();
-    if (!fl.length) return; // sin resultados: las flechas manejan el ticket
+    if (!fl.length) return;
     var active = document.activeElement;
     var tag = active ? active.tagName : '';
     var enBusqueda = active === document.querySelector('input[name="q"]');
@@ -93,7 +142,6 @@
       pintar();
       if (enInputFila) { var i = inputDe(fl[selTabla]); if (i) i.focus(); }
     } else if (/^[0-9.,]$/.test(e.key) && (enBusqueda || tag === '' || tag === 'BODY')) {
-      // Escribir un número con fila seleccionada edita su cantidad
       e.preventDefault(); e.stopImmediatePropagation();
       if (selTabla < 0) { selTabla = 0; pintar(); }
       var inp = inputDe(fl[selTabla]);
