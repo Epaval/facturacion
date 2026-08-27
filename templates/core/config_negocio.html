@@ -16,6 +16,7 @@
     </div>
     <p><label>Dirección</label>{{ form.direccion }}</p>
     <p><label>Serial impresora fiscal (control)</label>{{ form.serial_impresora_fiscal }}</p>
+    <p><label>Modo de número de control (excluyente)</label>{{ form.modo_control }}<br><small><strong>Fiscal:</strong> el serial de la impresora ES el N° de control (se imprime abajo a la derecha). <strong>Correlativo:</strong> 00-000000 asignado por el sistema.</small></p>
     <p><label>Notas al pie de la factura</label>{{ form.notas_factura }}</p>
     <p><label>Logo</label>{{ form.logo }}</p>
     <button class="btn btn-verde" type="submit">Guardar (F8)</button>

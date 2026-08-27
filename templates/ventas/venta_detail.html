@@ -12,9 +12,9 @@
     <div style="text-align:right">
       <h2 style="margin:0">FACTURA</h2>
       <p style="margin:4px 0"><strong>N°:</strong> {{ venta.numero|stringformat:"06d" }}</p>
+      {% if config.modo_control != "fiscal" %}<p style="margin:4px 0"><strong>N° de Control:</strong> {{ venta.numero_control }}</p>{% endif %}
       <p style="margin:0"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
       {% if venta.serial_fiscal or config.serial_impresora_fiscal %}
-      <p style="margin:0"><strong>N° de Control:</strong><br>{{ venta.numero_control|default:"—" }}</p>
       {% endif %}
     </div>
   </div>
@@ -56,6 +56,7 @@
 
   <div class="ticket-footer">
     <p>Factura generada por {{ venta.usuario.full_name }}</p>
+    {% if config.modo_control == "fiscal" %}<div style="text-align:right;font-weight:bold;font-size:1.05em;margin-top:16px">{{ venta.numero_control }}</div>{% endif %}
   </div>
 </div>
 

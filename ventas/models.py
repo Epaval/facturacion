@@ -39,8 +39,17 @@ class Venta(models.Model):
     class Meta:
         ordering = ["-numero"]
 
+    def _generar_control(self):
+        from core.models import ConfigNegocio
+        cfg = ConfigNegocio.get()
+        if cfg.modo_control == "fiscal":
+            return (self.serial_fiscal or cfg.serial_impresora_fiscal or "SIN-CAJA")[:20]
+        return f"00-{self.numero:06d}"
+
     def save(self, *args, **kwargs):
         if self.numero:
+            if not self.numero_control:
+                self.numero_control = self._generar_control()
             super().save(*args, **kwargs)
             return
         from django.db import IntegrityError, transaction
@@ -50,14 +59,7 @@ class Venta(models.Model):
                     ultima = Venta.objects.aggregate(m=Max("numero"))["m"]
                     self.numero = (ultima or 0) + 1
                     if not self.numero_control:
-                        from core.models import ConfigNegocio
-                        cfg = ConfigNegocio.get()
-                        if cfg.modo_control == "fiscal":
-                            self.numero_control = (
-                                self.serial_fiscal or cfg.serial_impresora_fiscal or "SIN-CAJA"
-                            )[:20]
-                        else:
-                            self.numero_control = f"00-{self.numero:06d}"
+                        self.numero_control = self._generar_control()
                     super().save(*args, **kwargs)
                     return
             except IntegrityError:

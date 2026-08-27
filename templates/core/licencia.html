@@ -10,85 +10,74 @@
   body { margin:0; background:#eef1f6; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; color:#0f2540; }
   .wrap { min-height:100vh; display:flex; align-items:center; justify-content:center; padding:24px; }
   .card { background:#f8f9fb; border:1px solid #e3e7ee; border-radius:12px; padding:32px 36px; width:100%; max-width:640px; box-shadow:0 2px 10px rgba(15,37,64,.06); }
-  .msg { padding:10px 14px; border-radius:8px; margin-bottom:14px; }
-  .msg.ok { background:#e5f6ec; color:#1e7e46; }
-  .msg.err { background:#fdecea; color:#b3261e; }
+  .opt { border:1px solid #e3e7ee; border-radius:10px; padding:18px; background:#fff; }
+  .opt h2 { margin:0 0 6px 0; font-size:16px; }
+  .opt p { margin:0 0 12px 0; color:#5b6b80; font-size:14px; }
+  .btn { display:inline-block; border:0; border-radius:8px; padding:10px 16px; font-weight:600; cursor:pointer; }
+  .btn-ambar { background:#b45309; color:#fff; }
+  .btn-verde { background:#1e7e46; color:#fff; }
+  .btn-borde { background:#fff; color:#0f2540; border:1px solid #cbd5e1; }
+  input[type=text] { width:100%; padding:9px 10px; border:1px solid #cbd5e1; border-radius:8px; box-sizing:border-box; }
+  .msg { padding:10px 14px; border-radius:8px; margin-bottom:12px; font-size:14px; }
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="card">
-<div class="panel" style="max-width:620px;margin:30px auto">
-  <h1>Licencia del sistema</h1>
-  {% if lic.activada %}
-    <div class="mensaje {% if lic.esta_vencida %}error{% else %}success{% endif %}">
-      {% if lic.esta_vencida %}
-        ⚠️ <strong>Licencia vencida.</strong> Contacta al proveedor para renovar.
-      {% else %}
-        ✅ <strong>Licencia activa.</strong>
-        {% if lic.dias_licencia == 7 %}Período de prueba: {% endif %}
-        {{ lic.dias_restantes }} días restantes.
-      {% endif %}
-    </div>
-  {% else %}
-    <p class="subtitulo">El sistema no está activado. Elige una opción:<br>
-<small>Huella de esta máquina: <strong>{{ huella }}</strong> (envíala para recibir tu clave de licencia)</small></p>
-    <form method="post" style="margin-bottom:14px">
-      {% csrf_token %}
-      <input type="hidden" name="accion" value="prueba">
-      <div style="margin:12px 0;padding:10px;border:1px solid #cbd5e1;border-radius:8px">
-        <label style="font-weight:bold">Número de caja / serial fiscal (obligatorio):</label>
-        <input type="text" name="serial_caja" value="{{ config.serial_impresora_fiscal|default:'' }}"
-               placeholder="Ej: FXD12F o Z1F0012065" required
-               style="width:100%;padding:6px;margin-top:4px">
-        <div style="margin-top:8px">
-          <label><input type="radio" name="modo_control" value="fiscal"
-            {% if config.modo_control == "fiscal" %}checked{% endif %}>
-            Impresora fiscal autorizada (el serial de caja ES el N° de control)</label><br>
-          <label><input type="radio" name="modo_control" value="correlativo"
-            {% if config.modo_control != "fiscal" %}checked{% endif %}>
-            Formato libre (N° de control correlativo 00-000000)</label>
-        </div>
+    <h1 style="margin:0 0 4px 0">Licencia del sistema</h1>
+    <p style="margin:0 0 18px 0;color:#5b6b80">Activa el producto para continuar.</p>
+
+    {% if lic.activada %}
+      <div class="msg" style="{% if lic.esta_vencida %}background:#fdecea;color:#b3261e{% else %}background:#e5f6ec;color:#1e7e46{% endif %}">
+        {% if lic.esta_vencida %}
+          ⚠️ <strong>Licencia vencida.</strong> Renueva con una clave nueva.
+        {% else %}
+          ✅ <strong>Licencia activa.</strong>
+          {% if lic.dias_licencia == 7 %}Período de prueba: {% endif %}
+          {{ lic.dias_restantes }} días restantes.
+        {% endif %}
       </div>
-      <button class="btn btn-ambar" type="submit" style="width:100%">Activar período de prueba (7 días)</button>
-    </form>
-    {% if messages %}
-    <div style="margin-bottom:14px">
-      {% for m in messages %}
-      <div style="padding:10px 14px;border-radius:8px;margin-bottom:8px;{% if m.tags == 'error' %}background:#fee2e2;color:#991b1b;border:1px solid #fca5a5{% elif m.tags == 'success' %}background:#dcfce7;color:#166534;border:1px solid #86efac{% else %}background:#e0e7ff;color:#3730a3;border:1px solid #a5b4fc{% endif %}">
-        {{ m }}
-      </div>
-      {% endfor %}
-    </div>
     {% endif %}
-    <h2>¿Ya tienes clave?</h2>
-    <form method="post" data-guardar>
-      {% csrf_token %}
-      <input type="hidden" name="accion" value="activar">
-      <div style="margin:12px 0;padding:10px;border:1px solid #cbd5e1;border-radius:8px">
-        <label style="font-weight:bold">Número de caja / serial fiscal (obligatorio):</label>
-        <input type="text" name="serial_caja" value="{{ config.serial_impresora_fiscal|default:'' }}"
-               placeholder="Ej: FXD12F o Z1F0012065" required
-               style="width:100%;padding:6px;margin-top:4px">
-        <div style="margin-top:8px">
-          <label><input type="radio" name="modo_control" value="fiscal"
-            {% if config.modo_control == "fiscal" %}checked{% endif %}>
-            Impresora fiscal autorizada (el serial de caja ES el N° de control)</label><br>
-          <label><input type="radio" name="modo_control" value="correlativo"
-            {% if config.modo_control != "fiscal" %}checked{% endif %}>
-            Formato libre (N° de control correlativo 00-000000)</label>
+
+    {% if not lic.activada or lic.esta_vencida %}
+      <div style="display:grid;gap:14px">
+        <div class="opt">
+          <h2>🧪 Prueba gratuita</h2>
+          <p>7 días con todas las funciones, sin compromiso.</p>
+          {% if not lic.activada %}
+          <form method="post">
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="prueba">
+            <button class="btn btn-ambar" type="submit" style="width:100%">Activar período de prueba (7 días)</button>
+          </form>
+          {% else %}
+          <p style="color:#991b1b;margin:0">La prueba ya fue utilizada. Renueva con una clave.</p>
+          {% endif %}
+        </div>
+
+        <div class="opt">
+          <h2>🔑 {% if lic.esta_vencida %}Renovar licencia{% else %}¿Ya tienes clave?{% endif %}</h2>
+          <p>Huella de esta máquina: <strong>{{ huella }}</strong><br>
+          <small>Envíala al proveedor para recibir tu clave de licencia.</small></p>
+          {% if messages %}
+            {% for m in messages %}
+              <div class="msg" style="{% if m.tags == 'error' %}background:#fdecea;color:#b3261e{% else %}background:#e5f6ec;color:#1e7e46{% endif %}">{{ m }}</div>
+            {% endfor %}
+          {% endif %}
+          <form method="post" data-guardar>
+            {% csrf_token %}
+            <input type="hidden" name="accion" value="activar">
+            <p style="margin:0 0 8px 0"><label style="font-weight:600">Clave de licencia (365 días)</label></p>
+            <input type="text" name="clave" required placeholder="ABCD-1234-EFGH-5678" style="text-transform:uppercase;margin-bottom:10px">
+            <button class="btn btn-verde" type="submit" style="width:100%">Activar licencia</button>
+          </form>
         </div>
       </div>
-      <p><label>Clave de licencia (365 días)</label>
-        <input type="text" name="clave" required placeholder="ABCD-1234-EFGH-5678" style="text-transform:uppercase">
-      </p>
-      <button class="btn btn-verde" type="submit">Activar licencia</button>
-    </form>
-  {% endif %}
-  {% if lic.activada and not lic.esta_vencida %}
-    <a class="btn btn-borde" href="{% url 'dashboard' %}" style="margin-top:14px;display:inline-block">Continuar al sistema</a>
-  {% endif %}
-</div>
+    {% endif %}
+
+    {% if lic.activada and not lic.esta_vencida %}
+      <a class="btn btn-borde" href="{% url 'dashboard' %}" style="margin-top:16px;width:100%;text-align:center">Continuar al sistema</a>
+    {% endif %}
   </div>
 </div>
 </body>

@@ -55,8 +55,10 @@ class CajaView(LoginRequiredMixin, View):
 
     def get(self, request):
         caja = Caja.objects.filter(usuario=request.user, estado="abierta").first()
+        from core.models import ConfigNegocio
         ctx = {"caja": caja, "title": "Caja",
-            "impresoras": ImpresoraFiscal.objects.filter(activa=True)}
+            "impresoras": ImpresoraFiscal.objects.filter(activa=True),
+            "config": ConfigNegocio.get()}
         if caja:
             ctx.update(resumen_caja(caja))
         return render(request, "ventas/caja.html", ctx)
@@ -65,20 +67,18 @@ class CajaView(LoginRequiredMixin, View):
         if Caja.objects.filter(usuario=request.user, estado="abierta").exists():
             messages.info(request, "Ya tienes una caja abierta")
             return redirect("ventas:caja")
-        impresora_id = request.POST.get("impresora")
-        impresora = ImpresoraFiscal.objects.filter(pk=impresora_id, activa=True).first() if impresora_id else None
-        if not impresora:
-            messages.error(request, "Debe seleccionar una impresora fiscal válida para abrir la caja")
-            return redirect("ventas:caja")
-
-        impresora_id = request.POST.get("impresora")
-        if not impresora_id:
-            messages.error(request, "Debe seleccionar una impresora fiscal para abrir la caja")
-            return redirect("ventas:caja")
-        impresora = ImpresoraFiscal.objects.filter(pk=impresora_id, activa=True).first()
-        if not impresora:
-            messages.error(request, "La impresora seleccionada no existe o no está activa")
-            return redirect("ventas:caja")
+        from core.models import ConfigNegocio
+        cfg = ConfigNegocio.get()
+        impresora = None
+        if cfg.modo_control == "fiscal":
+            impresora_id = request.POST.get("impresora")
+            if not impresora_id:
+                messages.error(request, "Modo fiscal: selecciona una impresora fiscal")
+                return redirect("ventas:caja")
+            impresora = ImpresoraFiscal.objects.filter(pk=impresora_id, activa=True).first()
+            if not impresora:
+                messages.error(request, "La impresora seleccionada no existe o no está activa")
+                return redirect("ventas:caja")
 
         try:
             inicial = Decimal(request.POST.get("monto_inicial", "0").replace(",", ".") or "0")

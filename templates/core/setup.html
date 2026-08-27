@@ -30,7 +30,17 @@
       <p><label>NIT</label>{{ form_cfg.nit }}</p>
     </div>
     <p><label>Dirección</label>{{ form_cfg.direccion }}</p>
-    <p><label>Serial impresora fiscal (número de control)</label>{{ form_cfg.serial_impresora_fiscal }}</p>
+        <div style="margin:10px 0;padding:10px;border:1px solid #cbd5e1;border-radius:8px">
+      <strong>Modo de número de control (excluyente):</strong><br>
+      <label style="margin-top:6px;display:block">
+        <input type="radio" name="modo_control" value="fiscal" id="modo_fiscal">
+        <strong>Impresora fiscal autorizada</strong> — el serial es el N° de control. Obligatorio al abrir caja.
+      </label>
+      <label style="margin-top:6px;display:block">
+        <input type="radio" name="modo_control" value="correlativo" id="modo_correlativo" checked>
+        <strong>Formato libre correlativo (00-000000)</strong> — el sistema asigna atómicamente, no requiere impresora.
+      </label>
+    </div>
     <p><label>Notas al pie de la factura</label>{{ form_cfg.notas_factura }}</p>
     <p><label>Logo (opcional)</label>{{ form_cfg.logo }}</p>
 
