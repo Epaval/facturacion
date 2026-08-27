@@ -199,19 +199,24 @@ class ProductoImportView(AdminRequiredMixin, TemplateView):
                         
                         grava_iva = row.get('grava_iva', '').strip().lower() in ('si', 'sí', '1', 'true')
                         
-                        producto, creado = Producto.objects.update_or_create(
-                            codigo_barras=codigo,
-                            defaults={
-                                'nombre': nombre,
-                                'categoria': categoria,
-                                'unidad': row.get('unidad', 'unidad').strip() or 'unidad',
-                                'precio_venta': to_decimal(row.get('precio_venta', 0)),
-                                'precio_compra': to_decimal(row.get('precio_compra', 0)),
-                                'stock': to_decimal(row.get('stock', 0)),
-                                'stock_minimo': to_decimal(row.get('stock_minimo', 0)),
-                                'grava_iva': grava_iva,
-                            }
-                        )
+                        defaults = {
+                            'nombre': nombre,
+                            'categoria': categoria,
+                            'unidad': row.get('unidad', 'unidad').strip() or 'unidad',
+                            'precio_venta': to_decimal(row.get('precio_venta', 0)),
+                            'precio_compra': to_decimal(row.get('precio_compra', 0)),
+                            'stock': to_decimal(row.get('stock', 0)),
+                            'stock_minimo': to_decimal(row.get('stock_minimo', 0)),
+                            'grava_iva': grava_iva,
+                        }
+                        # ANEXAR: con código → upsert por código; sin código → upsert por nombre
+                        if codigo:
+                            producto, creado = Producto.objects.update_or_create(
+                                codigo_barras=codigo, defaults=defaults)
+                        else:
+                            defaults['codigo_barras'] = None
+                            producto, creado = Producto.objects.update_or_create(
+                                nombre=nombre, defaults=defaults)
                         
                         if creado:
                             creados += 1

@@ -28,7 +28,7 @@
     <h1>FACTURA</h1>
     <p style="margin:4px 0"><strong>N°:</strong> {{ venta.numero|stringformat:"06d" }}</p>
     <p style="margin:4px 0"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
-    {% if venta.serial_fiscal %}<p style="margin:4px 0"><strong>Serial fiscal (control):</strong><br>{{ venta.serial_fiscal }}</p>{% endif %}
+    <p style="margin:4px 0"><strong>N° de Control:</strong> {{ venta.numero_control }}</p>
   </div>
 </div>
 <hr>
@@ -55,6 +55,7 @@
   {% if venta.cambio > 0 %}<tr><td class="der">Vuelto:</td><td class="der">Bs {{ venta.cambio }}</td></tr>{% endif %}
 </table>
 <p style="text-align:center;margin-top:18px;color:#555">Factura generada por {{ venta.usuario.full_name }}</p>
+<div style="text-align:right;font-weight:bold;font-size:1.15em;margin-top:16px">{{ venta.numero_control }}</div>
 <button class="btn no-print" onclick="window.print()">🖨 Imprimir (Ctrl+P)</button>
 <script>window.addEventListener('load', function () { setTimeout(function () { window.print(); }, 400); });</script>
 </body>

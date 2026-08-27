@@ -45,8 +45,14 @@ class ConfigNegocio(models.Model):
     direccion = models.CharField(max_length=255, blank=True)
     telefono = models.CharField(max_length=30, blank=True)
     serial_impresora_fiscal = models.CharField(
-        "Serial de impresora fiscal", max_length=60, blank=True,
-        help_text="Se usa como número de control en la factura"
+        "Número de caja / serial fiscal", max_length=60, blank=True,
+        help_text="Ej: FXD12F o Z1F0012065. En modo fiscal ES el N° de control."
+    )
+    modo_control = models.CharField(
+        "Modo de número de control (uno solo, excluyente)", max_length=12,
+        choices=[("fiscal", "Impresora fiscal (serial de caja como control)"),
+                 ("correlativo", "Correlativo 00-000000")],
+        default="correlativo",
     )
     logo = models.ImageField(upload_to="logo/", null=True, blank=True)
     notas_factura = models.TextField(

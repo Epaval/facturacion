@@ -20,6 +20,9 @@ class Venta(models.Model):
     cliente = models.ForeignKey("clientes.Cliente", on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name="ventas")
     serial_fiscal = models.CharField(max_length=40, null=True, blank=True)
+    numero_control = models.CharField(
+        "N° de Control", max_length=20, blank=True,
+        help_text="UNO SOLO: serial de caja (fiscal) o 00-000000 (correlativo)")
     usuario = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT, related_name="ventas")
     fecha = models.DateTimeField(auto_now_add=True)
     subtotal = models.DecimalField(max_digits=12, decimal_places=2, default=0)
@@ -46,6 +49,15 @@ class Venta(models.Model):
                 with transaction.atomic():
                     ultima = Venta.objects.aggregate(m=Max("numero"))["m"]
                     self.numero = (ultima or 0) + 1
+                    if not self.numero_control:
+                        from core.models import ConfigNegocio
+                        cfg = ConfigNegocio.get()
+                        if cfg.modo_control == "fiscal":
+                            self.numero_control = (
+                                self.serial_fiscal or cfg.serial_impresora_fiscal or "SIN-CAJA"
+                            )[:20]
+                        else:
+                            self.numero_control = f"00-{self.numero:06d}"
                     super().save(*args, **kwargs)
                     return
             except IntegrityError:

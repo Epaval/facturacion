@@ -14,7 +14,7 @@
       <p style="margin:4px 0"><strong>N°:</strong> {{ venta.numero|stringformat:"06d" }}</p>
       <p style="margin:0"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
       {% if venta.serial_fiscal or config.serial_impresora_fiscal %}
-      <p style="margin:0"><strong>Serial fiscal (control):</strong><br>{{ venta.serial_fiscal|default:config.serial_impresora_fiscal }}</p>
+      <p style="margin:0"><strong>N° de Control:</strong><br>{{ venta.numero_control|default:"—" }}</p>
       {% endif %}
     </div>
   </div>

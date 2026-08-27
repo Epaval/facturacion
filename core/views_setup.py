@@ -63,6 +63,23 @@ def setup_view(request):
     })
 
 
+def _guardar_caja(request):
+    """Guarda número de caja y modo de control (excluyente) desde el form de licencia."""
+    from core.models import ConfigNegocio
+    serial_caja = (request.POST.get("serial_caja") or "").strip()
+    modo = request.POST.get("modo_control", "correlativo")
+    if modo not in ("fiscal", "correlativo"):
+        modo = "correlativo"
+    if not serial_caja:
+        messages.error(request, "El número de caja / serial es obligatorio (ej: FXD12F).")
+        return False
+    cfg = ConfigNegocio.get()
+    cfg.serial_impresora_fiscal = serial_caja
+    cfg.modo_control = modo
+    cfg.save()
+    return True
+
+
 @login_required
 def licencia_view(request):
     """Activar / ver estado de la licencia. Sin perpetua."""
@@ -71,6 +88,8 @@ def licencia_view(request):
     if request.method == "POST":
         accion = request.POST.get("accion")
         if accion == "activar":
+            if not _guardar_caja(request):
+                return render(request, "core/licencia.html", {"huella": huella_maquina(), "lic": lic, "config": ConfigNegocio.get(), "title": "Licencia del sistema"})
             clave = request.POST.get("clave", "").strip().upper()
             resultado = validar_clave(clave)
             if not resultado:
@@ -86,6 +105,8 @@ def licencia_view(request):
                 messages.success(request, f"Licencia activada: {dias} días desde hoy.")
                 return redirect("dashboard")
         elif accion == "prueba":
+            if not _guardar_caja(request):
+                return render(request, "core/licencia.html", {"huella": huella_maquina(), "lic": lic, "config": ConfigNegocio.get(), "title": "Licencia del sistema"})
             lic.activada = True
             from django.utils import timezone
             lic.fecha_activacion = timezone.now()
@@ -94,8 +115,10 @@ def licencia_view(request):
             messages.success(request, "Período de prueba activado: 7 días.")
             return redirect("dashboard")
 
+    from core.models import ConfigNegocio
     return render(request, "core/licencia.html", {"huella": huella_maquina(),
         "lic": lic,
+        "config": ConfigNegocio.get(),
         "title": "Licencia del sistema",
     })
 
