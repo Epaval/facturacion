@@ -2,7 +2,7 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-    dependencies = [("core", "0003")]
+    dependencies = [("core", "0003_confignegocio_tasa_dolar")]
     operations = [
         migrations.AddField(
             model_name="confignegocio",
