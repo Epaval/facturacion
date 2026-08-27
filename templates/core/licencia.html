@@ -36,6 +36,20 @@
     <form method="post" style="margin-bottom:14px">
       {% csrf_token %}
       <input type="hidden" name="accion" value="prueba">
+      <div style="margin:12px 0;padding:10px;border:1px solid #cbd5e1;border-radius:8px">
+        <label style="font-weight:bold">Número de caja / serial fiscal (obligatorio):</label>
+        <input type="text" name="serial_caja" value="{{ config.serial_impresora_fiscal|default:'' }}"
+               placeholder="Ej: FXD12F o Z1F0012065" required
+               style="width:100%;padding:6px;margin-top:4px">
+        <div style="margin-top:8px">
+          <label><input type="radio" name="modo_control" value="fiscal"
+            {% if config.modo_control == "fiscal" %}checked{% endif %}>
+            Impresora fiscal autorizada (el serial de caja ES el N° de control)</label><br>
+          <label><input type="radio" name="modo_control" value="correlativo"
+            {% if config.modo_control != "fiscal" %}checked{% endif %}>
+            Formato libre (N° de control correlativo 00-000000)</label>
+        </div>
+      </div>
       <button class="btn btn-ambar" type="submit" style="width:100%">Activar período de prueba (7 días)</button>
     </form>
     {% if messages %}
@@ -51,6 +65,20 @@
     <form method="post" data-guardar>
       {% csrf_token %}
       <input type="hidden" name="accion" value="activar">
+      <div style="margin:12px 0;padding:10px;border:1px solid #cbd5e1;border-radius:8px">
+        <label style="font-weight:bold">Número de caja / serial fiscal (obligatorio):</label>
+        <input type="text" name="serial_caja" value="{{ config.serial_impresora_fiscal|default:'' }}"
+               placeholder="Ej: FXD12F o Z1F0012065" required
+               style="width:100%;padding:6px;margin-top:4px">
+        <div style="margin-top:8px">
+          <label><input type="radio" name="modo_control" value="fiscal"
+            {% if config.modo_control == "fiscal" %}checked{% endif %}>
+            Impresora fiscal autorizada (el serial de caja ES el N° de control)</label><br>
+          <label><input type="radio" name="modo_control" value="correlativo"
+            {% if config.modo_control != "fiscal" %}checked{% endif %}>
+            Formato libre (N° de control correlativo 00-000000)</label>
+        </div>
+      </div>
       <p><label>Clave de licencia (365 días)</label>
         <input type="text" name="clave" required placeholder="ABCD-1234-EFGH-5678" style="text-transform:uppercase">
       </p>
