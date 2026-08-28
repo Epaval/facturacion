@@ -63,7 +63,7 @@ class ReporteFiscalView(LoginRequiredMixin, AdminRequiredMixin, View):
         mes = int(request.GET.get("mes") or hoy.month)
         anio = int(request.GET.get("anio") or hoy.year)
 
-        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada")
+        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada").select_related("cliente", "usuario")
         notas = NotaCredito.objects.filter(fecha__year=anio, fecha__month=mes)
 
         total_ventas = q2(ventas.aggregate(s=Sum("total"))["s"])
@@ -102,7 +102,7 @@ class ReporteFiscalPrintView(LoginRequiredMixin, AdminRequiredMixin, View):
         mes = int(request.GET.get("mes") or hoy.month)
         anio = int(request.GET.get("anio") or hoy.year)
 
-        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada").order_by("numero")
+        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada").select_related("cliente", "usuario").order_by("numero")
         notas = NotaCredito.objects.filter(fecha__year=anio, fecha__month=mes).order_by("id")
 
         total_ventas = q2(ventas.aggregate(s=Sum("total"))["s"])
@@ -159,7 +159,7 @@ class ExportarReporteFiscalCSV(LoginRequiredMixin, AdminRequiredMixin, View):
         mes = int(request.GET.get("mes") or hoy.month)
         anio = int(request.GET.get("anio") or hoy.year)
 
-        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada").order_by("numero")
+        ventas = Venta.objects.filter(fecha__year=anio, fecha__month=mes, estado="completada").select_related("cliente", "usuario").order_by("numero")
         notas = NotaCredito.objects.filter(fecha__year=anio, fecha__month=mes).order_by("id")
 
         response = HttpResponse(content_type="text/csv; charset=utf-8-sig")

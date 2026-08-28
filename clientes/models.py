@@ -16,6 +16,10 @@ class Cliente(models.Model):
 
     class Meta:
         ordering = ["nombres"]
+        indexes = [
+            models.Index(fields=["nombres"], name="idx_cli_nombres"),
+            models.Index(fields=["ci_nit"], name="idx_cli_ci"),
+        ]
 
     @property
     def full_name(self):

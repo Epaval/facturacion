@@ -34,6 +34,12 @@ class Producto(models.Model):
 
     class Meta:
         ordering = ["nombre"]
+        indexes = [
+            models.Index(fields=["nombre"], name="idx_prod_nombre"),
+            models.Index(fields=["codigo_barras"], name="idx_prod_codigo"),
+            models.Index(fields=["categoria"], name="idx_prod_categoria"),
+            models.Index(fields=["activo"], name="idx_prod_activo"),
+        ]
 
     @property
     def es_pesable(self):

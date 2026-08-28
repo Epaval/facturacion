@@ -38,6 +38,11 @@ class Venta(models.Model):
 
     class Meta:
         ordering = ["-numero"]
+        indexes = [
+            models.Index(fields=["fecha"], name="idx_venta_fecha"),
+            models.Index(fields=["estado"], name="idx_venta_estado"),
+            models.Index(fields=["usuario", "fecha"], name="idx_venta_usr_fec"),
+        ]
 
     def _generar_control(self):
         from core.models import ConfigNegocio

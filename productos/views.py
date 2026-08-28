@@ -266,7 +266,7 @@ def buscar_global(request):
     q = (request.GET.get("q") or "").strip()
     if not q:
         return _JsonResponse({"productos": []})
-    qs = Producto.objects.filter(activo=True).filter(
+    qs = Producto.objects.filter(activo=True).select_related("categoria").filter(
         _Q(nombre__icontains=q) | _Q(codigo_barras__icontains=q)
     )[:12]
     data = []
@@ -315,7 +315,7 @@ def kardex(request):
     return render(request, "productos/kardex.html", {
         "movs": movs, "q": q, "tipo": tipo, "desde": desde, "hasta": hasta,
         "tipos": MovimientoStock.TIPOS,
-        "productos": Producto.objects.filter(activo=True).order_by("nombre"),
+        "productos": Producto.objects.filter(activo=True).select_related("categoria").order_by("nombre"),
     })
 
 
@@ -379,7 +379,7 @@ def conteo_fisico(request):
         messages.success(request, f"Conteo aplicado: {n} producto(s) ajustado(s)")
         return redirect("productos:kardex")
     from django.core.paginator import Paginator
-    qs = Producto.objects.filter(activo=True).order_by("nombre")
+    qs = Producto.objects.filter(activo=True).select_related("categoria").order_by("nombre")
     pag = Paginator(qs, 6)
     items = pag.get_page(request.GET.get("page"))
     return render(request, "productos/conteo.html", {"items": items})
@@ -390,5 +390,5 @@ def stock_negativo(request):
     if not (getattr(request.user, "rol", "") == "admin" or request.user.is_superuser):
         raise Http404()
     return render(request, "productos/stock_negativo.html", {
-        "prods": Producto.objects.filter(stock__lt=0).order_by("stock"),
+        "prods": Producto.objects.filter(stock__lt=0).select_related("categoria").order_by("stock"),
     })

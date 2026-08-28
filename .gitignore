@@ -55,4 +55,6 @@ dist/
 notas.mdcore/licencia_secret.py
 .env.web
 .env.web
-notas.md
+notas.mddb.sqlite3.bak.*
+db.sqlite3.bak.*
+tools/

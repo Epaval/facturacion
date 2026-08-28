@@ -21,8 +21,15 @@ class Licencia(models.Model):
 
     @classmethod
     def get(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
+        if not hasattr(cls, "_cfg_cache"):
+            obj, _ = cls.objects.get_or_create(pk=1)
+            cls._cfg_cache = obj
+        return cls._cfg_cache
+
+    @classmethod
+    def invalidar_cache(cls):
+        if hasattr(cls, "_cfg_cache"):
+            del cls._cfg_cache
 
     @property
     def dias_restantes(self):
@@ -72,13 +79,21 @@ class ConfigNegocio(models.Model):
             self.tasa_dolar = Decimal("1")
         self.pk = 1
         super().save(*args, **kwargs)
+        type(self).invalidar_cache()
         from core import moneda
         moneda.invalidar_tasa()
 
     @classmethod
     def get(cls):
-        obj, _ = cls.objects.get_or_create(pk=1)
-        return obj
+        if not hasattr(cls, "_cfg_cache"):
+            obj, _ = cls.objects.get_or_create(pk=1)
+            cls._cfg_cache = obj
+        return cls._cfg_cache
+
+    @classmethod
+    def invalidar_cache(cls):
+        if hasattr(cls, "_cfg_cache"):
+            del cls._cfg_cache
 
 
 class ImpresoraFiscal(models.Model):
