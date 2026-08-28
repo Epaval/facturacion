@@ -190,8 +190,8 @@ const RUTAS = {
       return;
     }
     if (enDetalle) return;
-    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopImmediatePropagation(); if (lista.length) { sel = (sel + 1) % lista.length; pintar(); } }
-    else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopImmediatePropagation(); if (lista.length) { sel = sel <= 0 ? lista.length - 1 : sel - 1; pintar(); } }
+    if (e.key === 'ArrowDown') { e.preventDefault(); e.stopImmediatePropagation(); if (lista.length) { sel = (sel + 1) % lista.length; pintar(); var items = listaEl.children; if (items[sel]) items[sel].scrollIntoView({block:'nearest'}); } }
+    else if (e.key === 'ArrowUp') { e.preventDefault(); e.stopImmediatePropagation(); if (lista.length) { sel = sel <= 0 ? lista.length - 1 : sel - 1; pintar(); var items = listaEl.children; if (items[sel]) items[sel].scrollIntoView({block:'nearest'}); } }
     else if (e.key === 'Enter') { e.preventDefault(); e.stopImmediatePropagation(); enter(); }
   }, true);
 })();
