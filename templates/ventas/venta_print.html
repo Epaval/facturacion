@@ -4,7 +4,7 @@
 <head>
 <meta charset="UTF-8">
 <title>Factura #{{ venta.numero|stringformat:"06d" }}</title>
-{% if config.modo_control != "fiscal" %}<p style="margin:4px 0"><strong>N° de Control:</strong> {{ venta.numero_control }}</p>{% endif %}
+{% if config.modo_control != "fiscal" %}<p style="margin:4px 0"><strong>N° de Control:</strong> {{ venta.numero_control }}<br><small style="font-family:monospace;color:#64748b;font-size:.75rem">Hash: {{ venta.hash_factura|slice:":16" }}...</small></p>{% endif %}
 <style>
   body { font-family: Arial, sans-serif; font-size: 13px; color: #111; margin: 24px auto; max-width: 720px; padding: 0 16px; }
   h1 { font-size: 20px; margin: 0; }

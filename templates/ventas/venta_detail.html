@@ -12,7 +12,7 @@
     <div style="text-align:right">
       <h2 style="margin:0">FACTURA</h2>
       <p style="margin:4px 0"><strong>N°:</strong> {{ venta.numero|stringformat:"06d" }}</p>
-      {% if config.modo_control != "fiscal" %}<p style="margin:4px 0"><strong>N° de Control:</strong> {{ venta.numero_control }}</p>{% endif %}
+      {% if config.modo_control != "fiscal" %}<p style="margin:4px 0"><strong>N° de Control:</strong> {{ venta.numero_control }}<br><small style="font-family:monospace;color:#64748b;font-size:.75rem">Hash: {{ venta.hash_factura|slice:":16" }}...</small></p>{% endif %}
       <p style="margin:0"><strong>Fecha:</strong> {{ venta.fecha|date:"d/m/Y H:i" }}</p>
       {% if venta.serial_fiscal or config.serial_impresora_fiscal %}
       {% endif %}
@@ -66,6 +66,14 @@
   {% else %}
   <span class="badge badge-azul">Factura emitida · solo consulta</span>
   {% endif %}
+    {% if config.modo_control == "fiscal" %}
+    <form method="post" action="{% url 'ventas:venta_ticket' venta.pk %}" style="display:inline">
+      {% csrf_token %}
+      <button class="btn btn-azul">🖨 Imprimir ticket fiscal</button>
+    </form>
+    {% else %}
+    <a class="btn btn-azul" href="{% url 'ventas:venta_pdf' venta.pk %}">⬇ Descargar PDF</a>
+    {% endif %}
   <a class="btn btn-borde" href="{% url 'ventas:list' %}">Volver al historial</a>
 </div>
 

@@ -1,8 +1,9 @@
+import hashlib
 from core.models import ImpresoraFiscal
 from decimal import Decimal
 
 from django.conf import settings
-from django.db import models
+from django.db import models, transaction
 from django.db.models import Max
 
 
@@ -20,6 +21,8 @@ class Venta(models.Model):
     cliente = models.ForeignKey("clientes.Cliente", on_delete=models.SET_NULL,
                                 null=True, blank=True, related_name="ventas")
     serial_fiscal = models.CharField(max_length=40, null=True, blank=True)
+    hash_prev = models.CharField("Hash anterior", max_length=64, blank=True, editable=False)
+    hash_factura = models.CharField("Hash de integridad", max_length=64, blank=True, editable=False)
     numero_control = models.CharField(
         "N° de Control", max_length=20, blank=True,
         help_text="UNO SOLO: serial de caja (fiscal) o 00-000000 (correlativo)")
@@ -44,6 +47,18 @@ class Venta(models.Model):
             models.Index(fields=["usuario", "fecha"], name="idx_venta_usr_fec"),
         ]
 
+    def _sellar(self):
+        """Cadena de hashes: hash_n = SHA256(hash_prev|numero|total|cliente)."""
+        if self.hash_factura:
+            return
+        with transaction.atomic():
+            prev = (Venta.objects.select_for_update()
+                    .exclude(pk=self.pk or 0)
+                    .order_by("-numero").first())
+            self.hash_prev = prev.hash_factura if prev else "0" * 64
+            payload = f"{self.hash_prev}|{self.numero}|{self.total}|{self.cliente_id or ''}"
+            self.hash_factura = hashlib.sha256(payload.encode()).hexdigest()
+
     def _generar_control(self):
         from core.models import ConfigNegocio
         cfg = ConfigNegocio.get()
@@ -55,6 +70,7 @@ class Venta(models.Model):
         if self.numero:
             if not self.numero_control:
                 self.numero_control = self._generar_control()
+                self._sellar()
             super().save(*args, **kwargs)
             return
         from django.db import IntegrityError, transaction
@@ -65,6 +81,7 @@ class Venta(models.Model):
                     self.numero = (ultima or 0) + 1
                     if not self.numero_control:
                         self.numero_control = self._generar_control()
+                    self._sellar()
                     super().save(*args, **kwargs)
                     return
             except IntegrityError:

@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block title %}Verificar integridad{% endblock %}
+{% block content %}
+<h1>Verificación de cadena de hashes</h1>
+
+{% if errores %}
+  <div style="background:#fee2e2;border:2px solid #dc2626;padding:16px;border-radius:8px;margin:16px 0">
+    <h2 style="color:#dc2626;margin:0 0 8px">⚠️ Cadena rota — {{ errores|length }} error(es)</h2>
+    <ul>
+      {% for e in errores %}
+        <li style="color:#dc2626">{{ e }}</li>
+      {% endfor %}
+    </ul>
+  </div>
+{% else %}
+  <div style="background:#d1fae5;border:2px solid #059669;padding:16px;border-radius:8px;margin:16px 0">
+    <h2 style="color:#059669;margin:0">✅ Cadena íntegra — {{ total }} facturas verificadas</h2>
+    <p style="margin:8px 0">Ninguna factura fue modificada desde su creación.</p>
+  </div>
+{% endif %}
+
+<p><strong>Último hash:</strong> <code style="font-size:.85rem">{{ ultimo_hash }}</code></p>
+<p><a href="{% url 'ventas:list' %}" class="btn btn-azul">← Volver a ventas</a></p>
+{% endblock %}

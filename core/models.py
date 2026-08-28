@@ -100,6 +100,15 @@ class ImpresoraFiscal(models.Model):
     """Impresoras fiscales del negocio. El admin las registra una vez."""
     nombre = models.CharField(max_length=60, help_text="Ej: Caja 1 principal, Respaldo")
     serial = models.CharField(max_length=40, unique=True)
+    conexion = models.CharField(max_length=12, default="txt", choices=[
+        ("txt", "Descargar .txt"), ("serial", "Serial (COM)"),
+        ("red", "Red (IP:puerto)"), ("compartida", "Compartida Windows/Linux")])
+    puerto_serial = models.CharField(max_length=20, blank=True, default="COM1")
+    baud = models.PositiveIntegerField(default=9600)
+    ip = models.CharField(max_length=40, blank=True)
+    puerto_red = models.PositiveIntegerField(default=9100)
+    nombre_compartido = models.CharField(max_length=80, blank=True,
+        help_text="Ej: \\\\PC\\EPSON (Windows) o nombre lp (Linux)")
     activa = models.BooleanField(default=True)
 
     class Meta:

@@ -179,8 +179,32 @@ class ImpresoraView(AdminRequiredMixin, TemplateView):
             if serial:
                 imp.serial = serial
             imp.activa = activa
+            imp.conexion = request.POST.get("conexion", imp.conexion)
+            imp.puerto_serial = (request.POST.get("puerto_serial") or "").strip() or imp.puerto_serial
+            imp.ip = (request.POST.get("ip") or "").strip()
+            imp.nombre_compartido = (request.POST.get("nombre_compartido") or "").strip()
+            try:
+                imp.baud = int(request.POST.get("baud") or imp.baud)
+                imp.puerto_red = int(request.POST.get("puerto_red") or imp.puerto_red)
+            except ValueError:
+                pass
             imp.save()
-            messages.success(request, f"Impresora {imp.nombre} actualizada")
+            if request.POST.get("accion") == "probar":
+                from core.impresion import enviar_ticket
+                texto = ("=== TICKET DE PRUEBA ===\n"
+                         f"{imp.nombre}  SERIAL: {imp.serial}\n"
+                         f"CONEXION: {imp.conexion} - CONFIGURACION OK\n")
+                if imp.conexion == "txt":
+                    r = HttpResponse(texto, content_type="text/plain; charset=utf-8")
+                    r["Content-Disposition"] = 'filename="ticket_prueba.txt"'
+                    return r
+                ok, msg = enviar_ticket(texto, imp)
+                if ok:
+                    messages.success(request, f"🖨 Prueba OK: {msg}")
+                else:
+                    messages.error(request, msg)
+            else:
+                messages.success(request, f"Impresora {imp.nombre} actualizada")
         else:
             if not nombre or not serial:
                 messages.error(request, "Nombre y serial son obligatorios")

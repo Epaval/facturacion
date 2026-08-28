@@ -3,6 +3,8 @@ from . import views
 from . import views_caja
 from . import views_notas_credito
 from . import views_reportes
+from .views_verificar import verificar_cadena
+from . import views_impresion
 
 app_name = "ventas"
 
@@ -27,4 +29,7 @@ urlpatterns = [
     path("<int:pk>/marcar-impresa/", views.MarcarImpresaView.as_view(), name="marcar_impresa"),
     path("<int:pk>/imprimir/", views.VentaPrintView.as_view(), name="venta_print"),
     path("<int:pk>/", views.VentaDetailView.as_view(), name="detail"),
+    path("verificar-cadena/", verificar_cadena, name="verificar_cadena"),
+    path("venta/<int:pk>/pdf/", views_impresion.venta_pdf, name="venta_pdf"),
+    path("venta/<int:pk>/ticket/", views_impresion.venta_ticket, name="venta_ticket"),
 ]

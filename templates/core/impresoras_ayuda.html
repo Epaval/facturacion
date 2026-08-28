@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}Ayuda de impresoras{% endblock %}
+{% block content %}
+<h1> Configurar mi impresora — guía paso a paso</h1>
+
+<h2>1. ¿Qué conexión usa tu impresora?</h2>
+<table style="width:100%;background:#fff;border-radius:8px;padding:8px">
+<tr><td><strong>Serial (COM)</strong></td><td>Cable serial/USB-serie. En Windows ver el puerto en Administrador de dispositivos → Puertos (COM y LPT), ej: COM1. Baud típico: 9600.</td></tr>
+<tr><td><strong>Red (IP)</strong></td><td>Impresora con Ethernet/WiFi. Usa su IP fija y puerto 9100 (raw).</td></tr>
+<tr><td><strong>Compartida Windows</strong></td><td>Panel de control → Dispositivos e impresoras → clic derecho → Compartir. Nombre: \\NOMBRE-PC\Impresora.</td></tr>
+<tr><td><strong>Descargar .txt</strong></td><td>Sin configuración: genera el ticket en archivo para imprimirlo después.</td></tr>
+</table>
+
+<h2>2. Probar la configuración</h2>
+<p>En <a href="{% url 'impresoras' %}">Impresoras</a>, guarda los datos y usa <strong>Imprimir prueba</strong>. Si sale un ticket de prueba, todo listo.</p>
+
+<h2>3. Formato del ticket</h2>
+<p>El sistema genera el ticket en formato fiscal 80mm (mayúsculas, columnas, N° de control, hash y serial abajo). En modo correlativo, el botón Imprimir descarga un PDF.</p>
+{% endblock %}

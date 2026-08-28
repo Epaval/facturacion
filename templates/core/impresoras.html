@@ -1,38 +1,51 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="panel" style="max-width:900px">
-  <h1>Impresoras fiscales</h1>
-  <p class="subtitulo">Registra las impresoras del negocio. Cada caja debe seleccionar una al abrir (obligatorio).</p>
+<h1>Impresoras fiscales</h1>
+<p class="subtitulo">Configura cómo se conecta cada impresora. <a href="{% url 'impresoras_ayuda' %}">📖 Guía paso a paso</a></p>
 
-  <table>
-    <thead><tr><th>Nombre</th><th>Serial</th><th>Activa</th><th style="width:180px"></th></tr></thead>
-    <tbody>
-      {% for imp in impresoras %}
-      <tr>
-        <form method="post">
-          {% csrf_token %}
-          <input type="hidden" name="pk" value="{{ imp.pk }}">
-          <td><input type="text" name="nombre" value="{{ imp.nombre }}" style="width:100%"></td>
-          <td><input type="text" name="serial" value="{{ imp.serial }}" style="width:100%"></td>
-          <td style="text-align:center"><input type="checkbox" name="activa" {% if imp.activa %}checked{% endif %}></td>
-          <td>
-            <button class="btn btn-azul" type="submit">Guardar</button>
-            <button class="btn btn-borde" type="submit" name="accion" value="eliminar" onclick="return confirm('¿Eliminar esta impresora?')">Eliminar</button>
-          </td>
-        </form>
-      </tr>
-      {% empty %}
-      <tr><td colspan="4">No hay impresoras registradas.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+{% for imp in impresoras %}
+<form method="post" class="panel" style="margin:14px 0;padding:16px">
+  {% csrf_token %}
+  <input type="hidden" name="pk" value="{{ imp.pk }}">
+  <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">
+    <label style="display:block;font-size:.85rem;font-weight:600">Nombre
+      <input type="text" name="nombre" value="{{ imp.nombre }}" style="width:100%;margin-top:4px;font-weight:400"></label>
+    <label style="display:block;font-size:.85rem;font-weight:600">Serial
+      <input type="text" name="serial" value="{{ imp.serial }}" style="width:100%;margin-top:4px;font-weight:400"></label>
+    <label style="display:block;font-size:.85rem;font-weight:600">Conexión
+      <select name="conexion" style="width:100%;margin-top:4px">
+        <option value="txt" {% if imp.conexion == "txt" %}selected{% endif %}>Descargar .txt</option>
+        <option value="serial" {% if imp.conexion == "serial" %}selected{% endif %}>Serial (COM)</option>
+        <option value="red" {% if imp.conexion == "red" %}selected{% endif %}>Red (IP)</option>
+        <option value="compartida" {% if imp.conexion == "compartida" %}selected{% endif %}>Compartida Windows/Linux</option>
+      </select></label>
+    <label style="display:block;font-size:.85rem;font-weight:600">Puerto COM
+      <input type="text" name="puerto_serial" value="{{ imp.puerto_serial }}" placeholder="COM1" style="width:100%;margin-top:4px;font-weight:400"></label>
+    <label style="display:block;font-size:.85rem;font-weight:600">Baud
+      <input type="text" name="baud" value="{{ imp.baud }}" placeholder="9600" style="width:100%;margin-top:4px;font-weight:400"></label>
+    <label style="display:block;font-size:.85rem;font-weight:600">IP
+      <input type="text" name="ip" value="{{ imp.ip }}" placeholder="192.168.0.50" style="width:100%;margin-top:4px;font-weight:400"></label>
+    <label style="display:block;font-size:.85rem;font-weight:600">Puerto red
+      <input type="text" name="puerto_red" value="{{ imp.puerto_red }}" placeholder="9100" style="width:100%;margin-top:4px;font-weight:400"></label>
+    <label style="display:block;font-size:.85rem;font-weight:600">Recurso compartido
+      <input type="text" name="nombre_compartido" value="{{ imp.nombre_compartido }}" placeholder="\\PC\EPSON" style="width:100%;margin-top:4px;font-weight:400"></label>
+  </div>
+  <div style="margin-top:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+    <label style="margin-right:auto"><input type="checkbox" name="activa" {% if imp.activa %}checked{% endif %}> Activa</label>
+    <button class="btn btn-azul" type="submit">Guardar</button>
+    <button class="btn btn-verde" type="submit" name="accion" value="probar">🖨 Probar</button>
+    <button class="btn btn-borde" type="submit" name="accion" value="eliminar" onclick="return confirm('¿Eliminar esta impresora?')">Eliminar</button>
+  </div>
+</form>
+{% empty %}
+<p class="panel" style="padding:16px">No hay impresoras registradas.</p>
+{% endfor %}
 
-  <h2 style="margin-top:22px">Registrar nueva impresora</h2>
-  <form method="post" style="display:flex;gap:10px;flex-wrap:wrap">
-    {% csrf_token %}
-    <input type="text" name="nombre" placeholder="Ej: Caja 1 principal" required style="flex:1;min-width:200px">
-    <input type="text" name="serial" placeholder="Ej: XFD123-12" required style="flex:1;min-width:160px">
-    <button class="btn btn-verde" type="submit">Registrar</button>
-  </form>
-</div>
+<h2 style="margin-top:22px">Registrar nueva impresora</h2>
+<form method="post" class="panel" style="padding:16px;display:flex;gap:10px;flex-wrap:wrap">
+  {% csrf_token %}
+  <input type="text" name="nombre" placeholder="Ej: Caja 1 principal" required style="flex:1;min-width:200px">
+  <input type="text" name="serial" placeholder="Ej: XFD123-12" required style="flex:1;min-width:160px">
+  <button class="btn btn-verde" type="submit">Registrar</button>
+</form>
 {% endblock %}
