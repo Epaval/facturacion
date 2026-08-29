@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Recuperar contraseña</title>
+<style>
+  body{margin:0;background:#1e66b0;font-family:system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}
+  .card{background:#f8f9fa;border-radius:12px;padding:28px;width:360px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+  h1{color:#1e66b0;text-align:center;font-size:1.35rem;margin:0 0 6px}
+  label{display:block;margin:12px 0 4px;font-weight:600}
+  input{width:100%;padding:10px;border:1px solid #cbd5e1;border-radius:6px;box-sizing:border-box}
+  button{width:100%;margin-top:16px;padding:12px;background:#1e66b0;color:#fff;border:0;border-radius:6px;font-size:1rem;cursor:pointer}
+  .msg{padding:8px 10px;border-radius:6px;margin:8px 0;font-size:.9rem}
+  .err{background:#fee2e2;color:#b91c1c}
+  .ok{background:#d1fae5;color:#047857}
+  a{color:#1e66b0}
+</style>
+</head>
+<body>
+<div class="card">
+  <h1>■ Recuperar contraseña</h1>
+  <p style="text-align:center;color:#64748b;font-size:.85rem;margin:0">Escribe tu usuario y la nueva contraseña.</p>
+  {% for m in messages %}
+    <div class="msg {% if m.tags == 'error' %}err{% else %}ok{% endif %}">{{ m }}</div>
+  {% endfor %}
+  <form method="post">
+    {% csrf_token %}
+    <label>Nombre de usuario:</label>
+    <input name="username" required autofocus>
+    <label>Nueva contraseña:</label>
+    <input type="password" name="password1" required>
+    <label>Repite la contraseña:</label>
+    <input type="password" name="password2" required>
+    <button type="submit">Restablecer</button>
+  </form>
+  <p style="text-align:center;margin:14px 0 0"><a href="accounts:login">← Volver a entrar</a></p>
+</div>
+</body>
+</html>

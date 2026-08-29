@@ -1,4 +1,5 @@
 from django.views.generic import TemplateView as _TV
+from accounts.views_recuperar import recuperar_clave
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin
@@ -20,6 +21,7 @@ urlpatterns = [
     path("clientes/", include("clientes.urls")),
     path("ventas/", include("ventas.urls")),
     path("impresoras/ayuda/", _TV.as_view(template_name="core/impresoras_ayuda.html"), name="impresoras_ayuda"),
+    path("recuperar/", recuperar_clave, name="recuperar"),
 ]
 
 if settings.DEBUG:
