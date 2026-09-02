@@ -1,3 +1,4 @@
+import os
 from django.views.generic import TemplateView
 from .models import ImpresoraFiscal
 from .licencia_keys import huella_maquina, validar_clave
@@ -91,9 +92,9 @@ def licencia_view(request):
             lic.activada = True
             from django.utils import timezone
             lic.fecha_activacion = timezone.now()
-            lic.dias_licencia = 7
+            lic.dias_licencia = int(os.environ.get("FACDIN_TRIAL_DIAS", "7"))
             lic.save()
-            messages.success(request, "Período de prueba activado: 7 días.")
+            messages.success(request, f"Período de prueba activado: {lic.dias_licencia} días.")
             return redirect("dashboard")
 
     return render(request, "core/licencia.html", {"huella": huella_maquina(),
@@ -214,3 +215,14 @@ class ImpresoraView(AdminRequiredMixin, TemplateView):
                 Imp.objects.create(nombre=nombre, serial=serial, activa=True)
                 messages.success(request, f"Impresora {nombre} registrada")
         return redirect("impresoras")
+
+
+def licencia_panel_view(request):
+    """Panel de licencia: tipo, estado, vencimiento, dias, huella y clave (v0.3.9)."""
+    from django.core.exceptions import PermissionDenied
+    if not request.user.is_authenticated:
+        from django.contrib.auth.views import redirect_to_login
+        return redirect_to_login(request.get_full_path())
+    if not getattr(request.user, "es_admin", False):
+        raise PermissionDenied
+    return render(request, "core/licencia_panel.html", {"lic": Licencia.get().info()})

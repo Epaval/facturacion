@@ -11,6 +11,34 @@ class Licencia(models.Model):
     fecha_activacion = models.DateTimeField(null=True, blank=True)
     dias_licencia = models.PositiveIntegerField(default=365)
 
+
+    def info(self):
+        """Resumen de licencia para el panel de administracion (v0.3.9)."""
+        import os
+        from datetime import timedelta
+        from django.utils import timezone
+        from .licencia_keys import huella_maquina
+
+        now = timezone.now()
+        trial = int(os.environ.get("FACDIN_TRIAL_DIAS", "7"))
+        dev = os.environ.get("FACDIN_DEV", "") == "1"
+        venc = None
+        dias = 0
+        if self.activada and self.fecha_activacion:
+            venc = self.fecha_activacion + timedelta(days=self.dias_licencia)
+            dias = max((venc - now).days, 0)
+        if not self.activada:
+            estado = "sin activar"
+        elif venc and now >= venc:
+            estado = "vencida"
+        elif not self.clave:
+            estado = "prueba"
+        else:
+            estado = "activada"
+        tipo = "PRUEBA" if not self.clave else f"LICENCIA {self.dias_licencia} DIAS"
+        return {"estado": estado, "tipo": tipo, "dias": dias, "vencimiento": venc,
+                "huella": huella_maquina(), "clave": self.clave, "dev": dev, "trial": trial}
+
     class Meta:
         verbose_name = "Licencia"
 

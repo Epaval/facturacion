@@ -1,3 +1,4 @@
+from core.views_setup import licencia_panel_view
 from django.views.generic import TemplateView as _TV
 from accounts.views_recuperar import recuperar_clave
 from django.conf import settings
@@ -9,6 +10,7 @@ from core import views as core_views
 from core.views import DashboardView
 
 urlpatterns = [
+    path("licencia-panel/", licencia_panel_view, name="licencia_panel"),
     path("admin/", admin.site.urls),
     path("", DashboardView.as_view(), name="dashboard"),
     path("setup/", core_views.setup_view, name="setup"),
