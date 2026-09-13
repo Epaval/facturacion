@@ -8,15 +8,65 @@ body.pos-page { overflow: hidden; height: 100vh; }
 .pos-left, .pos-right { display: flex; flex-direction: column; overflow: hidden; min-height: 0; }
 .pos-left { overflow-y: auto; }
 .pos-right .ticket-lista, .pos-right .ticket-scroll { flex: 1; overflow-y: auto; max-height: none !important; padding-right: 4px; }
-.pos-bottombar { grid-column: 1 / -1; display: flex; align-items: center; gap: 24px;
-  background: #fff; border: 1px solid var(--borde, #e2e8f0); border-radius: 12px; padding: 10px 16px; }
-.pos-totales { display: flex; align-items: center; gap: 26px; flex: 2.2; flex-wrap: wrap; }
-.pos-totales .badge { font-size: 1.15rem; padding: 8px 18px; }
-.pos-total-mini { font-size: .9rem; }
-.pos-total-mini span { display: block; color: #64748b; font-size: .8rem; }
-.pos-total-mini strong { font-size: 1.25rem; }
-.pos-totales .ticket-total { font-size: 2.1rem; padding: 0; }
-.pos-botones { display: flex; gap: 12px; flex: 1; }
-.btn-gigante { width: 100%; padding: 10px 12px; font-size: 1.05rem; font-weight: 700; }
+
+/* BARRA INFERIOR MÁS GRANDE */
+.pos-bottombar { 
+    grid-column: 1 / -1; 
+    display: flex; 
+    align-items: center; 
+    gap: 24px;
+    background: #fff; 
+    border: 1px solid var(--borde, #e2e8f0); 
+    border-radius: 12px; 
+    padding: 20px 24px;  /* AUMENTADO de 10px 16px */
+    min-height: 130px;   /* NUEVO: altura mínima */
+}
+
+.pos-totales { 
+    display: flex; 
+    align-items: center; 
+    gap: 26px; 
+    flex: 2.2; 
+    flex-wrap: wrap; 
+}
+
+.pos-totales .badge { 
+    font-size: 1.3rem;  /* AUMENTADO de 1.15rem */
+    padding: 12px 22px;  /* AUMENTADO de 8px 18px */
+}
+
+.pos-total-mini { 
+    font-size: 1.1rem;  /* AUMENTADO de .9rem */
+}
+
+.pos-total-mini span { 
+    display: block; 
+    color: #64748b; 
+    font-size: .95rem;  /* AUMENTADO de .8rem */
+}
+
+.pos-total-mini strong { 
+    font-size: 1.5rem;  /* AUMENTADO de 1.25rem */
+}
+
+.pos-totales .ticket-total { 
+    font-size: 2.6rem;  /* AUMENTADO de 2.1rem */
+    padding: 0; 
+}
+
+.pos-botones { 
+    display: flex; 
+    gap: 16px;  /* AUMENTADO de 12px */
+    flex: 1; 
+}
+
+.btn-gigante { 
+    width: 100%; 
+    padding: 20px 24px;  /* AUMENTADO de 10px 12px */
+    font-size: 1.3rem;   /* AUMENTADO de 1.05rem */
+    font-weight: 700; 
+    min-height: 70px;    /* NUEVO: altura mínima de botones */
+}
+
 .ticket-scroll .ticket-linea { padding: 8px 10px; border-radius: 6px; }
 .ticket-scroll .ticket-linea.seleccionada { background: #e0f2fe; outline: 2px solid #0ea5e9; }

@@ -60,13 +60,14 @@
     </div>
   </div>
 
-  <!-- BARRA INFERIOR SIEMPRE FIJA: totales + botones gigantes -->
+   <!-- BARRA INFERIOR SIEMPRE FIJA: totales + botones gigantes -->
   <div class="pos-bottombar">
     <div class="pos-totales">
-      <span class="badge badge-azul" style="font-size:1rem;padding:6px 14px">{{ total_items }} producto{{ total_items|pluralize:"s" }}</span>
+       <span class="badge-tasa">💵 Tasa: Bs {{ 1|bs }} / $</span>
+      <span class="badge badge-azul">{{ total_items }} producto{{ total_items|pluralize:"s" }}</span>
       <div class="pos-total-mini"><span>Base imponible</span><strong>Bs {{ base_imponible }}</strong></div>
       <div class="pos-total-mini"><span>IVA 16% incluido</span><strong>Bs {{ iva_incluido }}</strong></div>
-      <div class="ticket-total" style="padding:0">TOTAL: Bs {{ total }} <span style="background:#e2e8f0;color:#334155;border-radius:99px;padding:2px 10px;font-size:.9rem">$ {{ total|usd }}</span></div>
+      <div class="ticket-total">TOTAL: Bs {{ total }} <span>$ {{ total|usd }}</span></div>
     </div>
     <div class="pos-botones">
       <form method="post" data-finalizar style="flex:1">
@@ -137,9 +138,72 @@
   </div>
 </div>
 {% endif %}
-<div id="tasa-flotante" style="position:fixed;bottom:96px;left:14px;z-index:70;background:#0f172a;color:#fff;padding:8px 16px;border-radius:99px;font-weight:700;font-size:.95rem;box-shadow:0 4px 14px rgba(0,0,0,.35)">💵 Tasa: Bs {{ 1|bs }} / $</div>
+
 <style>
 .fila-seleccionada { background: #e0f2fe !important; outline: 2px solid #0ea5e9; }
+/* === FORZAR TAMAÑO GRANDE BARRA INFERIOR (NÚCLEO) === */
+.pos-bottombar { 
+    padding: 24px 28px !important;
+    min-height: 140px !important;
+    gap: 30px !important;
+}
+
+.pos-totales .badge { 
+    font-size: 1.3rem !important; 
+    padding: 12px 20px !important; 
+}
+
+.pos-total-mini { 
+    font-size: 1.2rem !important; 
+    margin-bottom: 4px !important;
+}
+
+.pos-total-mini span { 
+    font-size: 1rem !important; 
+}
+
+.pos-total-mini strong { 
+    font-size: 1.6rem !important; 
+}
+
+.pos-totales .ticket-total { 
+    font-size: 2.8rem !important; 
+    font-weight: 900 !important;
+    padding: 0 !important; /* Anula el padding:0 que tenías en el HTML */
+    line-height: 1.1 !important;
+}
+
+.pos-totales .ticket-total span { 
+    font-size: 1.3rem !important; /* Hace el precio en USD más visible */
+    padding: 6px 14px !important;
+    border-radius: 99px !important;
+    background: #e2e8f0 !important;
+    color: #334155 !important;
+}
+
+.btn-gigante { 
+    padding: 24px 16px !important;
+    font-size: 1.4rem !important; 
+    font-weight: 800 !important;
+    min-height: 80px !important;
+    line-height: 1.2 !important;
+    border-radius: 8px !important;
+}
+
+.pos-botones {
+    gap: 20px !important;
+}
+
+.badge-tasa {
+    background: #0f172a !important;
+    color: #fff !important;
+    padding: 8px 16px !important;
+    border-radius: 99px !important;
+    font-weight: 700 !important;
+    font-size: 1rem !important;
+    white-space: nowrap !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,.2) !important;
+}
 </style>
 <script id="cancelar-con-escape">
 (function () {
