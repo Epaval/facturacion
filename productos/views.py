@@ -352,6 +352,34 @@ def ajuste_stock(request):
 def conteo_fisico(request):
     if not (getattr(request.user, "rol", "") == "admin" or request.user.is_superuser):
         raise Http404()
+    
+    # Exportar a CSV
+    if request.GET.get("exportar") == "csv":
+        from django.http import HttpResponse
+        import csv
+        response = HttpResponse(content_type='text/csv; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename="conteo_inventario.csv"'
+        response.write('\ufeff')  # BOM para Excel
+        
+        writer = csv.writer(response)
+        writer.writerow(['Categoría', 'Código', 'Producto', 'Stock Sistema', 'Contado Físico', 'Diferencia'])
+        
+        qs = Producto.objects.filter(activo=True).select_related('categoria').order_by("categoria__nombre", "nombre")
+        
+        # Aplicar filtros
+        q = request.GET.get("q", "").strip()
+        cat_id = request.GET.get("categoria")
+        if q:
+            from django.db.models import Q
+            qs = qs.filter(Q(nombre__icontains=q) | Q(codigo_barras__icontains=q))
+        if cat_id:
+            qs = qs.filter(categoria_id=cat_id)
+        
+        for p in qs:
+            writer.writerow([p.categoria.nombre if p.categoria else '', p.codigo_barras or '', p.nombre, p.stock, '', ''])
+        
+        return response
+    
     if request.method == "POST":
         from decimal import Decimal, InvalidOperation
         from django.db import transaction
@@ -377,12 +405,34 @@ def conteo_fisico(request):
                     )
                     n += 1
         messages.success(request, f"Conteo aplicado: {n} producto(s) ajustado(s)")
-        return redirect("productos:kardex")
+        return redirect("productos:conteo")
+    
     from django.core.paginator import Paginator
-    qs = Producto.objects.filter(activo=True).select_related("categoria").order_by("nombre")
-    pag = Paginator(qs, 6)
+    qs = Producto.objects.filter(activo=True).select_related("categoria").order_by("categoria__nombre", "nombre")
+    
+    # Filtros
+    q = request.GET.get("q", "").strip()
+    cat_id = request.GET.get("categoria")
+    
+    if q:
+        from django.db.models import Q
+        qs = qs.filter(Q(nombre__icontains=q) | Q(codigo_barras__icontains=q))
+    if cat_id:
+        qs = qs.filter(categoria_id=cat_id)
+    
+    pag = Paginator(qs, 20)
     items = pag.get_page(request.GET.get("page"))
-    return render(request, "productos/conteo.html", {"items": items})
+    
+    # Obtener todas las categorías para el filtro
+    from productos.models import Categoria
+    categorias = Categoria.objects.all().order_by("nombre")
+    
+    return render(request, "productos/conteo.html", {
+        "items": items, 
+        "q": q,
+        "cat_id": cat_id,
+        "categorias": categorias
+    })
 
 
 @login_required
