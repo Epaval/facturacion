@@ -70,7 +70,12 @@ h1 { font-size: 2rem; }
     <h2 style="margin-top:16px">Pagos</h2>
     {% for p in pagos %}
       <div class="ticket-linea">
-        <span>{{ p.metodo_label }}</span>
+        <div style="display:flex;flex-direction:column;gap:2px">
+          <span>{{ p.metodo_label }}</span>
+          {% if p.referencia %}
+            <span style="font-size:0.85em;color:#64748b">Ref: {{ p.referencia }}</span>
+          {% endif %}
+        </div>
         <span class="ticket-derecha">
           <strong>Bs {{ p.monto }}</strong>
           <form method="post" class="form-inline">
@@ -88,13 +93,18 @@ h1 { font-size: 2rem; }
     <form method="post" class="fila-agregar" style="margin-top:10px">
       {% csrf_token %}
       <input type="hidden" name="accion" value="agregar_pago">
-      <select name="metodo" style="width:auto" autofocus>
-        <option value="efectivo">Efectivo</option>        
+      <select name="metodo" style="width:160px" autofocus id="select-metodo">
+        <option value="efectivo">Efectivo (Bs)</option>
+        <option value="efectivo_usd">Efectivo ($)</option>
+        <option value="pago_movil">Pago Móvil</option>
+        <option value="transferencia">Transferencia</option>
+        <option value="zelle">Zelle</option>
         <option value="punto_venta">Punto de venta</option>
         <option value="bio_pago">Bio Pago</option>
-        <option value="transferencia">Transferencia</option>
+        <option value="credito">Crédito (Fiado)</option>
       </select>
-      <input type="number" name="monto" step="0.01" min="0.01" placeholder="Monto Bs" required style="width:120px">
+      <input type="number" name="monto" step="0.01" min="0.01" placeholder="Monto Bs" required style="width:130px" id="input-monto">
+      <input type="text" name="referencia" placeholder="N° Referencia" style="width:150px" id="input-referencia">
       <button class="btn btn-azul" type="submit">Agregar pago</button>
     </form>
     <p class="subtitulo" style="margin-top:8px">Puedes combinar varios pagos (efectivo + transferencia) hasta completar el total.<br><span id="pagos-teclado" class="subtitulo">↑/↓ método · Enter → monto · Enter agrega · Tab: modo borrar (↑/↓ + Supr) · Tab/Esc sale</span></p>
@@ -234,4 +244,61 @@ document.addEventListener('DOMContentLoaded', function () {
 })();
 </script>
 <div id="tasa-flotante" style="position:fixed;bottom:14px;left:14px;z-index:70;background:#0f172a;color:#fff;padding:8px 16px;border-radius:99px;font-weight:700;font-size:.95rem;box-shadow:0 4px 14px rgba(0,0,0,.35)">💵 Tasa: Bs {{ 1|bs }} / $</div>
+
+<script>
+(function() {
+    var selectMetodo = document.getElementById('select-metodo');
+    var inputMonto = document.getElementById('input-monto');
+    var inputReferencia = document.getElementById('input-referencia');
+    
+    function esEfectivo(metodo) {
+        return metodo === 'efectivo' || metodo === 'efectivo_usd';
+    }
+    
+    // Al cambiar el método, actualizar placeholders
+    selectMetodo.addEventListener('change', function() {
+        var metodo = this.value;
+        
+        // Actualizar placeholder del monto
+        if (metodo === 'efectivo_usd') {
+            inputMonto.placeholder = 'Monto USD';
+        } else {
+            inputMonto.placeholder = 'Monto Bs';
+        }
+        
+        // Actualizar placeholder y estilo de referencia
+        if (!esEfectivo(metodo)) {
+            inputReferencia.placeholder = 'N° Referencia (Obligatorio)';
+            inputReferencia.style.borderColor = '#dc2626';
+        } else {
+            inputReferencia.placeholder = 'N° Referencia (Opcional)';
+            inputReferencia.style.borderColor = '';
+        }
+    });
+    
+    // Al dar Enter en el monto
+    inputMonto.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            var metodo = selectMetodo.value;
+            
+            // Si no es efectivo, pasar al campo de referencia
+            if (!esEfectivo(metodo)) {
+                inputReferencia.focus();
+            } else {
+                // Si es efectivo, agregar el pago directamente
+                this.form.submit();
+            }
+        }
+    });
+    
+    // Al dar Enter en la referencia
+    inputReferencia.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            e.preventDefault();
+            this.form.submit();
+        }
+    });
+})();
+</script>
 {% endblock %}

@@ -109,13 +109,19 @@ class DetalleVenta(models.Model):
 
 class Pago(models.Model):
     METODOS = [
-        ("efectivo", "Efectivo"), ("transferencia", "Transferencia"),
+        ("efectivo", "Efectivo (Bs)"), 
+        ("efectivo_usd", "Efectivo ($)"), 
+        ("pago_movil", "Pago Móvil"),
+        ("transferencia", "Transferencia"), 
+        ("zelle", "Zelle"),
         ("punto_venta", "Punto de venta"),
         ("bio_pago", "Bio Pago"),
+        ("credito", "Crédito (Fiado)"),
     ]
     venta = models.ForeignKey(Venta, on_delete=models.CASCADE, related_name="pagos")
     metodo = models.CharField(max_length=15, choices=METODOS)
     monto = models.DecimalField(max_digits=12, decimal_places=2)
+    referencia = models.CharField("Referencia", max_length=100, blank=True, null=True, help_text="N° de operación, Zelle, etc.")
 
     def __str__(self):
         return f"{self.get_metodo_display()} Bs {self.monto}"
@@ -177,6 +183,7 @@ class NotaCreditoDetalle(models.Model):
     detalle_venta = models.ForeignKey(DetalleVenta, on_delete=models.PROTECT, related_name='devoluciones')
     cantidad_devuelta = models.DecimalField(max_digits=12, decimal_places=3)
     monto = models.DecimalField(max_digits=12, decimal_places=2)
+    referencia = models.CharField("Referencia", max_length=100, blank=True, null=True, help_text="N° de operación, Zelle, etc.")
     
     def __str__(self):
         return f"{self.detalle_venta.producto.nombre} x{self.cantidad_devuelta}"

@@ -13,7 +13,7 @@ from django.views.generic import DetailView, ListView
 from clientes.models import Cliente
 from productos.models import Producto, MovimientoStock
 
-from core.moneda import precio_bs as precio_bs_producto
+from core.moneda import precio_bs as precio_bs_producto, tasa_actual
 from .models import Caja, Pago, Venta
  
 
@@ -296,14 +296,34 @@ class PagoView(LoginRequiredMixin, View):
 
         if accion == "agregar_pago":
             metodo = request.POST.get("metodo", "efectivo")
+            referencia = request.POST.get("referencia", "").strip()
+            
+            # Referencia obligatoria para métodos que no sean efectivo
+            if metodo not in ["efectivo", "efectivo_usd"] and not referencia:
+                messages.error(request, f"La referencia es obligatoria para {dict(Pago.METODOS).get(metodo, metodo)}")
+                return redirect("ventas:pago")
+            
             try:
                 monto = Decimal(request.POST.get("monto", "0").replace(",", ".") or "0")
             except InvalidOperation:
                 monto = Decimal("0")
+            
             if monto <= 0:
                 messages.error(request, "El monto debe ser mayor a cero")
             else:
-                pagos.append({"metodo": metodo, "monto": str(monto)})
+                # Si el pago es en USD, convertir a Bs usando la tasa del día
+                monto_bs = monto
+                if metodo == "efectivo_usd":
+                    tasa = tasa_actual()
+                    monto_bs = (monto * tasa).quantize(Decimal("0.01"))
+                    messages.info(request, f"USD {monto} × Tasa {tasa} = Bs {monto_bs}")
+                
+                pagos.append({
+                    "metodo": metodo, 
+                    "monto": str(monto_bs),  # Guardar en Bs
+                    "monto_original": str(monto) if metodo == "efectivo_usd" else None,
+                    "referencia": referencia
+                })
                 request.session["pos_pagos"] = pagos
             return redirect("ventas:pago")
 
@@ -366,7 +386,7 @@ class PagoView(LoginRequiredMixin, View):
                     if producto.stock < 0:
                         messages.warning(request, f"⚠️ Stock de {producto.nombre} quedó en {producto.stock}. Venta permitida: notifica al administrador para revisar el inventario.")
                 for p in pagos:
-                    venta.pagos.create(metodo=p["metodo"], monto=Decimal(p["monto"]))
+                    venta.pagos.create(metodo=p["metodo"], monto=Decimal(p["monto"]), referencia=p.get("referencia", ""))
 
             request.session["pos_lineas"] = []
             request.session["pos_pagos"] = []
