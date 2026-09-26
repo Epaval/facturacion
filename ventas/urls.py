@@ -32,4 +32,7 @@ urlpatterns = [
     path("verificar-cadena/", verificar_cadena, name="verificar_cadena"),
     path("venta/<int:pk>/pdf/", views_impresion.venta_pdf, name="venta_pdf"),
     path("venta/<int:pk>/ticket/", views_impresion.venta_ticket, name="venta_ticket"),
+    path("reporte-pagos/", views_reportes.ReportePagosView.as_view(), name="reporte_pagos"),
+    path("reporte-pagos/imprimir/", views_reportes.ReportePagosPrintView.as_view(), name="reporte_pagos_print"),
+    path("exportar-reporte-pagos/", views_reportes.ExportarReportePagosCSV.as_view(), name="exportar_reporte_pagos"),
 ]

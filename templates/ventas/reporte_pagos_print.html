@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Reporte de Pagos {{ desde }} al {{ hasta }}</title>
+<style>
+  body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; color: #111; }
+  h1 { font-size: 18px; margin-bottom: 5px; }
+  h2 { font-size: 14px; margin-top: 20px; margin-bottom: 10px; border-bottom: 2px solid #333; padding-bottom: 5px; }
+  table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+  th, td { border: 1px solid #333; padding: 6px 8px; text-align: left; }
+  th { background: #f0f0f0; font-weight: bold; }
+  .tot { font-weight: bold; background: #f0f0f0; }
+  .der { text-align: right; }
+  .info { margin-bottom: 15px; color: #555; font-size: 11px; }
+  @media print {
+    body { margin: 10px; }
+    th { background: #f0f0f0 !important; -webkit-print-color-adjust: exact; }
+  }
+</style>
+</head>
+<body>
+
+<div style="text-align:center;margin-bottom:20px">
+  <h1>{{ config.nombre|default:"Mi Negocio" }}</h1>
+  <p style="margin:5px 0"><strong>RIF:</strong> {{ config.rif }}</p>
+</div>
+
+<h1 style="text-align:center">Reporte de Pagos por Método</h1>
+<p class="info" style="text-align:center">Período: {{ desde }} al {{ hasta }}{% if metodo %} · Método: {{ metodo }}{% endif %}</p>
+
+<h2>Resumen por método de pago</h2>
+<table>
+  <thead><tr><th>Método</th><th>Cantidad</th><th class="der">Total Bs</th></tr></thead>
+  <tbody>
+  {% for label, total, cantidad in totales_por_metodo %}
+    <tr>
+      <td>{{ label }}</td>
+      <td>{{ cantidad }}</td>
+      <td class="der">Bs {{ total }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+  <tfoot>
+    <tr class="tot">
+      <td>TOTAL</td>
+      <td>{{ total_pagos }}</td>
+      <td class="der">Bs {{ total_general }}</td>
+    </tr>
+  </tfoot>
+</table>
+
+<h2>Detalle de pagos</h2>
+<table>
+  <thead><tr><th>Fecha</th><th>Factura</th><th>Cliente</th><th>Método</th><th class="der">Monto Bs</th><th>Referencia</th></tr></thead>
+  <tbody>
+  {% for p in pagos %}
+    <tr>
+      <td>{{ p.venta.fecha|date:"d/m/Y H:i" }}</td>
+      <td>{{ p.venta.numero|stringformat:"06d" }}</td>
+      <td>{% if p.venta.cliente %}{{ p.venta.cliente.full_name }}{% else %}Consumidor final{% endif %}</td>
+      <td>{{ p.get_metodo_display }}</td>
+      <td class="der">Bs {{ p.monto }}</td>
+      <td>{{ p.referencia|default:"-" }}</td>
+    </tr>
+  {% endfor %}
+  </tbody>
+</table>
+
+<p style="margin-top:30px;text-align:center;font-size:10px;color:#666">
+  Reporte generado el {{ "now"|date:"d/m/Y H:i" }} por {{ config.nombre|default:"Sistema" }}
+</p>
+
+</body>
+</html>

@@ -11,7 +11,7 @@ from django.views.generic import ListView
 
 from core.mixins import AdminRequiredMixin
 from clientes.models import Cliente
-from .models import LibroVenta, NotaCredito, Venta
+from .models import LibroVenta, NotaCredito, Pago, Venta
 
 MESES = [(1, "Enero"), (2, "Febrero"), (3, "Marzo"), (4, "Abril"), (5, "Mayo"), (6, "Junio"),
          (7, "Julio"), (8, "Agosto"), (9, "Septiembre"), (10, "Octubre"), (11, "Noviembre"), (12, "Diciembre")]
@@ -194,4 +194,128 @@ class ExportarReporteFiscalCSV(LoginRequiredMixin, AdminRequiredMixin, View):
         w.writerow([])
         w.writerow(["TOTAL NOTAS DE CREDITO", "", "", "", "", f(tn)])
         w.writerow(["TOTAL NETO (VENTAS - NC)", "", "", "", "", f(tv - tn)])
+        return response
+
+
+class ReportePagosView(LoginRequiredMixin, AdminRequiredMixin, View):
+    def get(self, request):
+        hoy = timezone.now()
+        desde = request.GET.get("desde") or hoy.replace(day=1).strftime("%Y-%m-%d")
+        hasta = request.GET.get("hasta") or hoy.strftime("%Y-%m-%d")
+        metodo = request.GET.get("metodo", "")
+        
+        pagos = Pago.objects.select_related("venta", "venta__cliente").order_by("-venta__fecha", "-id")
+        
+        if desde:
+            pagos = pagos.filter(venta__fecha__date__gte=desde)
+        if hasta:
+            pagos = pagos.filter(venta__fecha__date__lte=hasta)
+        if metodo:
+            pagos = pagos.filter(metodo=metodo)
+        
+        totales_por_metodo = []
+        total_general = Decimal("0")
+        for metodo_key, metodo_label in Pago.METODOS:
+            total = q2(pagos.filter(metodo=metodo_key).aggregate(s=Sum("monto"))["s"])
+            cantidad = pagos.filter(metodo=metodo_key).count()
+            if total > 0:
+                totales_por_metodo.append((metodo_label, total, cantidad))
+                total_general += total
+        
+        ctx = {
+            "title": "Reporte de pagos",
+            "desde": desde, "hasta": hasta, "metodo": metodo,
+            "metodos": Pago.METODOS,
+            "pagos": pagos[:500],
+            "totales_por_metodo": totales_por_metodo,
+            "total_general": total_general,
+            "total_pagos": pagos.count(),
+        }
+        return render(request, "ventas/reporte_pagos.html", ctx)
+
+
+class ReportePagosPrintView(LoginRequiredMixin, AdminRequiredMixin, View):
+    def get(self, request):
+        from core.models import ConfigNegocio
+        hoy = timezone.now()
+        desde = request.GET.get("desde") or hoy.replace(day=1).strftime("%Y-%m-%d")
+        hasta = request.GET.get("hasta") or hoy.strftime("%Y-%m-%d")
+        metodo = request.GET.get("metodo", "")
+        
+        pagos = Pago.objects.select_related("venta", "venta__cliente").order_by("venta__fecha", "id")
+        
+        if desde:
+            pagos = pagos.filter(venta__fecha__date__gte=desde)
+        if hasta:
+            pagos = pagos.filter(venta__fecha__date__lte=hasta)
+        if metodo:
+            pagos = pagos.filter(metodo=metodo)
+        
+        totales_por_metodo = []
+        total_general = Decimal("0")
+        for metodo_key, metodo_label in Pago.METODOS:
+            total = q2(pagos.filter(metodo=metodo_key).aggregate(s=Sum("monto"))["s"])
+            cantidad = pagos.filter(metodo=metodo_key).count()
+            if total > 0:
+                totales_por_metodo.append((metodo_label, total, cantidad))
+                total_general += total
+        
+        ctx = {
+            "desde": desde, "hasta": hasta, "metodo": metodo,
+            "config": ConfigNegocio.get(),
+            "pagos": pagos,
+            "totales_por_metodo": totales_por_metodo,
+            "total_general": total_general,
+            "total_pagos": pagos.count(),
+        }
+        return render(request, "ventas/reporte_pagos_print.html", ctx)
+
+
+class ExportarReportePagosCSV(LoginRequiredMixin, AdminRequiredMixin, View):
+    def get(self, request):
+        hoy = timezone.now()
+        desde = request.GET.get("desde") or hoy.replace(day=1).strftime("%Y-%m-%d")
+        hasta = request.GET.get("hasta") or hoy.strftime("%Y-%m-%d")
+        metodo = request.GET.get("metodo", "")
+        
+        pagos = Pago.objects.select_related("venta", "venta__cliente").order_by("venta__fecha", "id")
+        
+        if desde:
+            pagos = pagos.filter(venta__fecha__date__gte=desde)
+        if hasta:
+            pagos = pagos.filter(venta__fecha__date__lte=hasta)
+        if metodo:
+            pagos = pagos.filter(metodo=metodo)
+        
+        response = HttpResponse(content_type="text/csv; charset=utf-8-sig")
+        response["Content-Disposition"] = f'attachment; filename="reporte_pagos_{desde}_a_{hasta}.csv"'
+        response.write("\ufeff")
+        w = csv.writer(response, delimiter=";")
+        f = lambda x: str(q2(x)).replace(".", ",")
+        
+        w.writerow([f"REPORTE DE PAGOS {desde} al {hasta}"])
+        w.writerow([])
+        w.writerow(["RESUMEN POR METODO"])
+        w.writerow(["Metodo", "Cantidad", "Total Bs"])
+        for metodo_key, metodo_label in Pago.METODOS:
+            total = q2(pagos.filter(metodo=metodo_key).aggregate(s=Sum("monto"))["s"])
+            cantidad = pagos.filter(metodo=metodo_key).count()
+            if total > 0:
+                w.writerow([metodo_label, cantidad, f(total)])
+        w.writerow([])
+        w.writerow(["DETALLE DE PAGOS"])
+        w.writerow(["Fecha", "Factura", "Cliente", "Metodo", "Monto Bs", "Referencia"])
+        total_general = Decimal("0")
+        for p in pagos:
+            w.writerow([
+                p.venta.fecha.strftime("%d/%m/%Y %H:%M"),
+                f"{p.venta.numero:06d}",
+                p.venta.cliente.full_name if p.venta.cliente else "Consumidor final",
+                p.get_metodo_display(),
+                f(p.monto),
+                p.referencia or ""
+            ])
+            total_general += q2(p.monto)
+        w.writerow([])
+        w.writerow(["TOTAL GENERAL", "", "", "", f(total_general), ""])
         return response

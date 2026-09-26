@@ -1,0 +1,85 @@
+{% extends "base.html" %}
+{% load moneda %}
+{% block content %}
+<h1>Reporte de pagos por método</h1>
+<p class="subtitulo">Análisis de recaudación por método de pago en el período seleccionado</p>
+
+<form method="get" style="display:flex;gap:10px;margin-bottom:14px;flex-wrap:wrap;align-items:end">
+  <div>
+    <label style="font-size:0.85em;color:#666">Desde</label><br>
+    <input type="date" name="desde" value="{{ desde }}" style="padding:8px;border:1px solid #ddd;border-radius:4px">
+  </div>
+  <div>
+    <label style="font-size:0.85em;color:#666">Hasta</label><br>
+    <input type="date" name="hasta" value="{{ hasta }}" style="padding:8px;border:1px solid #ddd;border-radius:4px">
+  </div>
+  <div>
+    <label style="font-size:0.85em;color:#666">Método (opcional)</label><br>
+    <select name="metodo" style="padding:8px;border:1px solid #ddd;border-radius:4px;min-width:150px">
+      <option value="">Todos los métodos</option>
+      {% for key, label in metodos %}
+        <option value="{{ key }}" {% if metodo == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+  </div>
+  <button class="btn btn-azul" type="submit" style="margin-bottom:0">Generar reporte</button>
+</form>
+
+<form style="display:flex;gap:10px;margin-bottom:14px" onsubmit="event.preventDefault()">
+  <a class="btn btn-verde" href="{% url 'ventas:exportar_reporte_pagos' %}?desde={{ desde }}&hasta={{ hasta }}&metodo={{ metodo }}"> Exportar CSV</a>
+  <a class="btn btn-borde" target="_blank" href="{% url 'ventas:reporte_pagos_print' %}?desde={{ desde }}&hasta={{ hasta }}&metodo={{ metodo }}">🖨 Imprimir / PDF</a>
+</form>
+
+<div class="panel" style="display:flex;gap:26px;flex-wrap:wrap;margin-bottom:14px">
+  <div><span class="subtitulo">Total pagos ({{ total_pagos }})</span><br><strong style="color:var(--verde)">Bs {{ total_general }}</strong></div>
+  <div><span class="subtitulo">Total en USD (aprox.)</span><br><strong>$ {{ total_general|usd }}</strong></div>
+</div>
+
+<div class="panel" style="margin-bottom:14px">
+  <h2>Resumen por método de pago</h2>
+  <table>
+    <thead><tr><th>Método</th><th>Cantidad de pagos</th><th>Total Bs</th><th>% del total</th></tr></thead>
+    <tbody>
+    {% for label, total, cantidad in totales_por_metodo %}
+      <tr>
+        <td>{{ label }}</td>
+        <td>{{ cantidad }}</td>
+        <td><strong>Bs {{ total }}</strong></td>
+        <td>{% widthratio total total_general 100 %}%</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4">Sin datos en el período seleccionado.</td></tr>
+    {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr style="background:#f0f0f0;font-weight:bold">
+        <td>TOTAL</td>
+        <td>{{ total_pagos }}</td>
+        <td>Bs {{ total_general }}</td>
+        <td>100%</td>
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<div class="panel">
+  <h2>Detalle de pagos</h2>
+  <table>
+    <thead><tr><th>Fecha</th><th>Factura</th><th>Cliente</th><th>Método</th><th>Monto Bs</th><th>Referencia</th></tr></thead>
+    <tbody>
+    {% for p in pagos %}
+      <tr>
+        <td>{{ p.venta.fecha|date:"d/m/Y H:i" }}</td>
+        <td><a href="{% url 'ventas:detail' p.venta.pk %}">{{ p.venta.numero|stringformat:"06d" }}</a></td>
+        <td>{% if p.venta.cliente %}{{ p.venta.cliente.full_name }}{% else %}Consumidor final{% endif %}</td>
+        <td>{{ p.get_metodo_display }}</td>
+        <td><strong>Bs {{ p.monto }}</strong></td>
+        <td>{{ p.referencia|default:"-" }}</td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="6">No hay pagos en este período.</td></tr>
+    {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
