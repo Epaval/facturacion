@@ -340,6 +340,55 @@ class PagoView(LoginRequiredMixin, View):
         if accion == "volver":
             return redirect("ventas:pos")
 
+        if accion == "guardar_temporal":
+            cliente_id = request.session.get("pos_cliente")
+            if not cliente_id:
+                messages.error(request, "Selecciona un cliente para guardar la venta temporal")
+                return redirect("ventas:pago")
+            
+            with transaction.atomic():
+                cliente = Cliente.objects.select_for_update().get(pk=cliente_id)
+                metodos = {p["metodo"] for p in pagos} if pagos else set()
+                metodo_final = metodos.pop() if len(metodos) == 1 else "mixto" if len(metodos) > 1 else "efectivo"
+                
+                gravado = monto_gravado(lineas)
+                base, iva = desglose_iva(total, gravado)
+                caja = Caja.objects.filter(usuario=request.user, estado="abierta").first()
+                serial = caja.impresora.serial if caja and caja.impresora else None
+                
+                venta = Venta.objects.create(
+                    serial_fiscal=serial,
+                    cliente=cliente, usuario=request.user,
+                    subtotal=total, descuento=0, total=total,
+                    base_imponible=base, monto_iva=iva,
+                    monto_recibido=pagado,
+                    cambio=max(pagado - total, Decimal("0")),
+                    metodo_pago=metodo_final,
+                    estado="temporal",
+                    notas="Venta temporal guardada",
+                )
+                
+                for l in lineas:
+                    producto = Producto.objects.select_for_update().get(pk=l["producto_id"])
+                    venta.detalles.create(
+                        producto=producto,
+                        cantidad=Decimal(l["cantidad"]),
+                        precio_unitario=Decimal(l["precio"]),
+                    )
+                
+                for p in pagos:
+                    venta.pagos.create(
+                        metodo=p["metodo"], 
+                        monto=Decimal(p["monto"]),
+                        referencia=p.get("referencia", "")
+                    )
+            
+            request.session["pos_lineas"] = []
+            request.session["pos_pagos"] = []
+            request.session["pos_cliente"] = None
+            messages.success(request, f"Venta temporal #{venta.numero} guardada. Puedes recuperarla desde el historial.")
+            return redirect("ventas:pos")
+
         if accion == "confirmar":
             cliente_id = request.session.get("pos_cliente")
             if not cliente_id:
@@ -418,6 +467,69 @@ class VentaListView(LoginRequiredMixin, ListView):
         ctx["q"] = self.request.GET.get("q", "")
         ctx["title"] = "Historial de ventas"
         return ctx
+
+
+class VentaTemporalListView(LoginRequiredMixin, ListView):
+    model = Venta
+    template_name = "ventas/venta_temporal_list.html"
+    context_object_name = "object_list"
+    paginate_by = 20
+
+    def get_queryset(self):
+        qs = super().get_queryset().filter(estado="temporal").select_related("cliente", "usuario")
+        if not self.request.user.es_admin:
+            qs = qs.filter(usuario=self.request.user)
+        q = self.request.GET.get("q", "").strip()
+        if q:
+            qs = qs.filter(Q(numero__icontains=q) | Q(cliente__nombres__icontains=q))
+        return qs.order_by("-fecha")
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx["q"] = self.request.GET.get("q", "")
+        ctx["title"] = "Facturas temporales"
+        return ctx
+
+
+class VentaTemporalRecuperarView(LoginRequiredMixin, View):
+    def post(self, request, pk):
+        venta = get_object_or_404(Venta, pk=pk, estado="temporal")
+        
+        # Cargar líneas del ticket en sesión
+        lineas = []
+        for d in venta.detalles.all():
+            lineas.append({
+                "producto_id": d.producto.id,
+                "nombre": d.producto.nombre,
+                "cantidad": str(d.cantidad),
+                "precio": str(d.precio_unitario),
+                "por_peso": d.producto.por_peso,
+                "unidad": d.producto.unidad,
+                "subtotal": str(d.subtotal),
+            })
+        request.session["pos_lineas"] = lineas
+        
+        # Cargar pagos en sesión
+        pagos = []
+        for p in venta.pagos.all():
+            pagos.append({
+                "metodo": p.metodo,
+                "monto": str(p.monto),
+                "referencia": p.referencia or "",
+            })
+        request.session["pos_pagos"] = pagos
+        
+        # Cargar cliente en sesión
+        if venta.cliente:
+            request.session["pos_cliente"] = str(venta.cliente.pk)
+        
+        # Anular la venta temporal (no eliminar, para mantener historial)
+        venta.estado = "anulada"
+        venta.notas = f"Recuperada para continuar cobro"
+        venta.save()
+        
+        messages.success(request, f"Factura temporal #{venta.numero} recuperada. Continúa el cobro.")
+        return redirect("ventas:pago")
 
 
 class VentaDetailView(LoginRequiredMixin, DetailView):

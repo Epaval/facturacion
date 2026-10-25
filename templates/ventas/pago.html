@@ -135,6 +135,14 @@ h1 { font-size: 2rem; }
     </form>
     <form method="post" style="margin-top:8px">
       {% csrf_token %}
+      <input type="hidden" name="accion" value="guardar_temporal">
+      <button class="btn btn-borde" style="width:100%" type="submit"
+              {% if not cliente %}disabled{% endif %}>
+        💾 Guardar temporal (sin cobrar)
+      </button>
+    </form>
+    <form method="post" style="margin-top:8px">
+      {% csrf_token %}
       <input type="hidden" name="accion" value="volver">
       <button class="btn btn-borde" style="width:100%" type="submit">Volver al ticket (Esc)</button>
     </form>

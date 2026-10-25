@@ -15,7 +15,7 @@ class Venta(models.Model):
         ("bio_pago", "Bio Pago"), ("credito", "Crédito (fiado)"),
         ("mixto", "Mixto"),
     ]
-    ESTADOS = [("completada", "Completada"), ("anulada", "Anulada")]
+    ESTADOS = [("completada", "Completada"), ("anulada", "Anulada"), ("temporal", "Temporal")]
 
     numero = models.PositiveIntegerField(unique=True, editable=False)
     cliente = models.ForeignKey("clientes.Cliente", on_delete=models.SET_NULL,

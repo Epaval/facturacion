@@ -35,4 +35,6 @@ urlpatterns = [
     path("reporte-pagos/", views_reportes.ReportePagosView.as_view(), name="reporte_pagos"),
     path("reporte-pagos/imprimir/", views_reportes.ReportePagosPrintView.as_view(), name="reporte_pagos_print"),
     path("exportar-reporte-pagos/", views_reportes.ExportarReportePagosCSV.as_view(), name="exportar_reporte_pagos"),
+    path("temporales/", views.VentaTemporalListView.as_view(), name="temporal_list"),
+    path("temporales/<int:pk>/recuperar/", views.VentaTemporalRecuperarView.as_view(), name="temporal_recuperar"),
 ]
