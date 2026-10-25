@@ -1,11 +1,14 @@
 [Setup]
+#ifndef MyAppVersion
+#define MyAppVersion "0.4.7"
+#endif
 AppName=FacturaFácil
-AppVersion=0.4.0
+AppVersion={#MyAppVersion}
 AppPublisher=FACDIN
 DefaultDirName={autopf}\Facturacion
 DefaultGroupName=FACDIN Facturación
 OutputDir=.
-OutputBaseFilename=FACDIN-Facturacion-Setup-0.4.0
+OutputBaseFilename=Facturacion-Setup-{#MyAppVersion}
 Compression=lzma2/max
 SolidCompression=yes
 PrivilegesRequired=lowest
