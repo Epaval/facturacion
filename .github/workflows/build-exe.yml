@@ -43,7 +43,10 @@ jobs:
     
     - name: Compile installer with Inno Setup
       run: |
-        & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" instalador\facturacion.iss
+        $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+        if (-not (Test-Path $iscc)) { choco install innosetup -y }
+        $ver = $env:GITHUB_REF_NAME -replace '^v',''
+        & $iscc instalador\facturacion.iss /DMyAppVersion=$ver
       shell: pwsh
     
     - name: Upload installer artifact
