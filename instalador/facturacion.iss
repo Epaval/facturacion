@@ -23,7 +23,7 @@ Name: "autoiniciar"; Description: "Iniciar servidor al encender Windows"; GroupD
 
 [Files]
 Source: "..\dist\Facturacion\*"; DestDir: "{app}"; Flags: ignoreversion recursesubdirs createallsubdirs
-Source: "icons\*.ico"; DestDir: "{app}\icons"; Flags: ignoreversion
+Source: "..\icons\*.ico"; DestDir: "{app}\icons"; Flags: ignoreversion
 
 
 [Icons]
